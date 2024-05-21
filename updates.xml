@@ -7,13 +7,13 @@
         <version>1.0.0</version>
         <downloads>
             <downloadurl type="full" format="zip">
-                https://github.com/TLWebdesign/Pretty-Reviews/archive/refs/tags/V1.0.0.zip
+                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.0.0.zip
             </downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>
         </tags>
-        <sha256></sha256>
+        <sha256>91711593e2b4b4f4b0c848b03aac45752f50f61421ca4c8a19ca1e021280318e</sha256>
         <maintainer>TLWebdesign</maintainer>
         <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
         <section>Updates</section>

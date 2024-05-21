@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_PRETTYREVIEWS</name>
-    <creationDate>2024-</creationDate>
+    <creationDate>2024-05-21</creationDate>
     <author>Tom van der Laan</author>
     <authorEmail>info@tlwebdesign.nl</authorEmail>
     <authorUrl>https://tlwebdesign.nl</authorUrl>
