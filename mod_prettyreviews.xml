@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" client="site" method="upgrade">
+    <name>MOD_PRETTYREVIEWS</name>
+    <creationDate>2024-</creationDate>
+    <author>Tom van der Laan</author>
+    <authorEmail>info@tlwebdesign.nl</authorEmail>
+    <authorUrl>https://tlwebdesign.nl</authorUrl>
+    <copyright>TLWebdesign</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+    <version>1.0.0</version>
+    <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
+    <scriptfile>script.php</scriptfile>
+    <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
+    <files>
+        <folder module="mod_prettyreviews">services</folder>
+        <folder>src</folder>
+        <folder>tmpl</folder>
+        <folder>language</folder>
+    </files>
+    <media folder="media" destination="mod_prettyreviews">
+        <filename>logo.svg</filename>
+        <folder>js</folder>
+    </media>
+    <config>
+        <fields name="params">
+            <fieldset name="basic">
+                <field
+                        name="logo"
+                        type="note"
+                        description="MOD_PRETTYREVIEWS_FIELD_LOGO_DESC"
+                />
+                <field
+                        name="ownerinfo"
+                        type="note"
+                        description="MOD_PRETTYREVIEWS_FIELD_OWNERINFO_DESC"
+                />
+                <field
+                        name="info"
+                        type="note"
+                        description="MOD_PRETTYREVIEWS_FIELD_INFO_DESC"
+                />
+            </fieldset>
+            <fieldset name="settings" label="MOD_PRETTYREVIEWS_FIELDSET_SETTINGS_LABEL">
+                <field
+                        name="cid"
+                        required="true"
+                        type="text"
+                        label="MOD_PRETTYREVIEWS_FIELD_CID_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_CID_DESC"
+                        default=""
+                />
+                <field
+                        name="apikey"
+                        required="true"
+                        type="text"
+                        label="MOD_PRETTYREVIEWS_FIELD_APIKEY_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_APIKEY_DESC"
+                        default=""
+                />
+                <field
+                        name="reviewsort"
+                        type="radio"
+                        default="most_relevant"
+                        label="MOD_PRETTYREVIEWS_FIELD_REVIEWSORT_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_REVIEWSORT_DESC"
+                        class="btn-group"
+                        required="true"
+                >
+                    <option value="most_relevant">MOD_PRETTYREVIEWS_MOSTRELEVANT</option>
+                    <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
+                </field>
+                <field
+                        type="CustomPretty"
+                        name="test123"
+                        addfieldprefix="TLWeb\Module\Prettyreviews\Site\Field"
+                />
+            </fieldset>
+            <fieldset name="advanced">
+                <field
+                        name="layout"
+                        type="modulelayout"
+                        label="JFIELD_ALT_LAYOUT_LABEL"
+                        class="form-select"
+                        validate="moduleLayout"
+                />
+
+                <field
+                        name="moduleclass_sfx"
+                        type="textarea"
+                        label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+                        rows="3"
+                        validate="CssIdentifier"
+                />
+
+                <field
+                        name="cache"
+                        type="list"
+                        label="COM_MODULES_FIELD_CACHING_LABEL"
+                        default="1"
+                        filter="integer"
+                        validate="options"
+                >
+                    <option value="1">JGLOBAL_USE_GLOBAL</option>
+                    <option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+                </field>
+                <field
+                        name="cache_time"
+                        type="number"
+                        label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+                        default="900"
+                        filter="integer"
+                />
+                <field
+                        name="cachemode"
+                        type="hidden"
+                        default="static"
+                >
+                    <option value="static"></option>
+                </field>
+            </fieldset>
+
+        </fields>
+    </config>
+    <updateservers>
+        <server type="extension" priority="2" name="Pretty Reviews Updates">
+            https://raw.githubusercontent.com/TLWebdesign/Pretty-Reviews/main/updates.xml
+        </server>
+    </updateservers>
+    <changelogurl>https://raw.githubusercontent.com/TLWebdesign/Pretty-Reviews/main/changelog.xml</changelogurl>
+</extension>

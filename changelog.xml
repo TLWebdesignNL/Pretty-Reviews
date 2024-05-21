@@ -1,0 +1,10 @@
+<changelogs>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.0</version>
+        <addition>
+            <item>First release of Pretty Reviews.</item>
+        </addition>
+    </changelog>
+</changelogs>
