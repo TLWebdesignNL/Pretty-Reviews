@@ -19,11 +19,12 @@ class CustomPrettyField extends FormField
 
         $moduleParams = $this->form->getValue('params');
         $input   = Factory::getApplication()->input;
+
         $attributes = array(
             "data-id" => $input->getInt('id'),
-            "data-cid" => isset($moduleParams->cid) ?? null,
-            "data-apikey" => isset($moduleParams->apikey) ?? null,
-            "data-reviewsort" => isset($moduleParams->reviewsort) ?? null
+            "data-cid" => (isset($moduleParams->cid)) ? $moduleParams->cid : null,
+            "data-apikey" => (isset($moduleParams->apikey)) ? $moduleParams->apikey : null,
+            "data-reviewsort" => (isset($moduleParams->reviewsort)) ? $moduleParams->reviewsort : null
         );
         $toolbar = Toolbar::getInstance('toolbar');
         $toolbar->standardButton('updateReviews')

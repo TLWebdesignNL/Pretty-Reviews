@@ -106,6 +106,8 @@ $googleReviews = $reviewdata;
         </button>
     </div>
     <div class="w-100 text-center">
-        <a href="https://www.google.com/maps?cid=<?php echo $params->get("cid"); ?>" target="_blank" class="btn btn-primary">Bekijk alle reviews</a>
+        <?php if (isset($googleReviews['url']) && $googleReviews['url']) : ?>
+            <a href="<?php echo $googleReviews['url']; ?>" target="_blank" class="btn btn-primary">Bekijk alle reviews</a>
+        <?php endif; ?>
     </div>
 </div>

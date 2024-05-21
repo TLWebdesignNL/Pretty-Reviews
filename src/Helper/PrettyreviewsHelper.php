@@ -40,6 +40,12 @@ class PrettyreviewsHelper
         $reviewSort    = $input->getString('reviewSort');
         $googleReviews = $this->getGoogleReviews($cid, $apiKey, $reviewSort);
 
+        $googleReviewsArray = json_decode(json_encode($googleReviews), true);
+        $googleReviewsArray['apiUrl'] = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" . $cid . "&language=nl&fields=url,rating,reviews,user_ratings_total&reviews_sort=" . $reviewSort . "&key=".$apiKey;
+
+        // for debugging save googlereviews raw data
+        $this->saveJsonFile($googleReviewsArray,JPATH_ROOT . '/media/mod_prettyreviews/rawdata.json');
+
         // Get existing reviews from JSON file
         $data = $this->getJsonFile();
 
@@ -64,7 +70,7 @@ class PrettyreviewsHelper
         // URL FOR THE MORE EXPENSIVE NEW PLACES API
         //$url = "https://places.googleapis.com/v1/places/" . $cid . "?languageCode=nl&fields=rating,reviews,userRatingCount&key=".$apiKey;
         // URL FOR THE OLD PLACES API (CHEAPER)
-        $url = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" . $cid . "&language=nl&fields=rating,reviews,user_ratings_total&reviews_sort=" . $reviewSort . "&key=".$apiKey;
+        $url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" . $cid . "&language=nl&fields=url,rating,reviews,user_ratings_total&reviews_sort=" . $reviewSort . "&key=".$apiKey;
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6");
@@ -104,6 +110,9 @@ class PrettyreviewsHelper
         }
         if (isset($googleReviews->result->user_ratings_total)) {
             $data['ratingsCount'] = $googleReviews->result->user_ratings_total;
+        }
+        if (isset($googleReviews->result->url)) {
+            $data['url'] = $googleReviews->result->url;
         }
 
         // Update reviews array
