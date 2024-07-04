@@ -35,8 +35,8 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
     protected function getLayoutData(): array
     {
         $data = parent::getLayoutData();
-        $data['reviewdata'] = $this->getHelperFactory()->getHelper('PrettyreviewsHelper')->getJsonFile();
-        
-        return $data;
+	    $moduleId = (isset($data['module']->id)) ? $data['module']->id : "";
+	    $data['reviewdata'] = $this->getHelperFactory()->getHelper('PrettyreviewsHelper')->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json');
+	    return $data;
     }
 }

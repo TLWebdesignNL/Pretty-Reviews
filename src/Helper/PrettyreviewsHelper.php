@@ -13,6 +13,8 @@ namespace TLWeb\Module\Prettyreviews\Site\Helper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\Table\Module;
 
 \defined('_JEXEC') or die;
 
@@ -32,13 +34,17 @@ class PrettyreviewsHelper
      */
     public function updateGoogleReviewsAjax(): bool
     {
+
         $input = Factory::getApplication()->input;
 
         // Get the Google reviews
+        $moduleId      = $input->getString('moduleId');
         $cid           = $input->getString('cid');
         $apiKey        = $input->getString('apiKey');
         $reviewSort    = $input->getString('reviewSort');
         $googleReviews = $this->getGoogleReviews($cid, $apiKey, $reviewSort);
+
+		$getModule = ModuleHelper::getModuleById($moduleId);
 
         $googleReviewsArray = json_decode(json_encode($googleReviews), true);
         $googleReviewsArray['apiUrl'] = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" . $cid . "&language=nl&fields=url,rating,reviews,user_ratings_total&reviews_sort=" . $reviewSort . "&key=".$apiKey;
@@ -47,13 +53,13 @@ class PrettyreviewsHelper
         $this->saveJsonFile($googleReviewsArray,JPATH_ROOT . '/media/mod_prettyreviews/rawdata.json');
 
         // Get existing reviews from JSON file
-        $data = $this->getJsonFile();
+        $data = $this->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json');
 
         // Update data with new reviews
         $data = $this->updateRatingAndReviews($googleReviews, $data);
 
         // Save and return outcome (bool)
-        return $this->saveJsonFile($data);
+        return $this->saveJsonFile($data, JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json');
     }
 
     /**
