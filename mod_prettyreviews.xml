@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_PRETTYREVIEWS</name>
-    <creationDate>2024-05-21</creationDate>
+    <creationDate>2025-02-22</creationDate>
     <author>Tom van der Laan</author>
     <authorEmail>info@tlwebdesign.nl</authorEmail>
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -123,8 +123,8 @@
     </config>
     <updateservers>
         <server type="extension" priority="2" name="Pretty Reviews Updates">
-            https://raw.githubusercontent.com/TLWebdesign/Pretty-Reviews/main/updates.xml
+            https://raw.githubusercontent.com/TLWebdesignNL/Pretty-Reviews/main/updates.xml
         </server>
     </updateservers>
-    <changelogurl>https://raw.githubusercontent.com/TLWebdesign/Pretty-Reviews/main/changelog.xml</changelogurl>
+    <changelogurl>https://raw.githubusercontent.com/TLWebdesignNL/Pretty-Reviews/main/changelog.xml</changelogurl>
 </extension>

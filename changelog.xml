@@ -7,4 +7,12 @@
             <item>First release of Pretty Reviews.</item>
         </addition>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.1</version>
+        <fix>
+            <item>Fixed Update URL.</item>
+        </fix>
+    </changelog>
 </changelogs>
