@@ -15,4 +15,12 @@
             <item>Fixed Update URL.</item>
         </fix>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.2</version>
+        <fix>
+            <item>Improved / Fixed language strings.</item>
+        </fix>
+    </changelog>
 </changelogs>
