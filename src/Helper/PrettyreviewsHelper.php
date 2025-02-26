@@ -34,7 +34,9 @@ class PrettyreviewsHelper
      */
     public function updateGoogleReviewsAjax(): bool
     {
-
+	    if (!Session::checkToken('get')) {
+		    return json_encode(['success' => false, 'message' => 'Invalid Token']);
+	    }
         $input = Factory::getApplication()->input;
 
         // Get the Google reviews
@@ -43,8 +45,6 @@ class PrettyreviewsHelper
         $apiKey        = $input->getString('apiKey');
         $reviewSort    = $input->getString('reviewSort');
         $googleReviews = $this->getGoogleReviews($cid, $apiKey, $reviewSort);
-
-		$getModule = ModuleHelper::getModuleById($moduleId);
 
         $googleReviewsArray = json_decode(json_encode($googleReviews), true);
         $googleReviewsArray['apiUrl'] = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" . $cid . "&language=nl&fields=url,rating,reviews,user_ratings_total&reviews_sort=" . $reviewSort . "&key=".$apiKey;

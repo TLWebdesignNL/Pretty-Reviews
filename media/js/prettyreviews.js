@@ -11,10 +11,13 @@ async function updateReviews(el) {
     let dataCid = el.getAttribute('data-cid');
     let dataReviewSort = el.getAttribute('data-reviewsort');
     let dataApiKey = el.getAttribute('data-apiKey');
-    let JoomlaRoot = prettyReviewsOptions.baseUrl;
-    const url = new URL(JoomlaRoot + 'index.php?option=com_ajax&module=prettyreviews&method=updateGoogleReviews&format=json&moduleId=' + dataId + '&cid=' + dataCid + '&apiKey=' + dataApiKey + '&reviewSort=' + dataReviewSort);
+    let tokenElement = document.querySelector('input[type="hidden"][value="1"]');
+    let token = csrfInput.getAttribute('name') : null;
 
-    if (dataCid && dataReviewSort && dataApiKey) {
+    let JoomlaRoot = prettyReviewsOptions.baseUrl;
+    const url = new URL(JoomlaRoot + 'index.php?option=com_ajax&module=prettyreviews&method=updateGoogleReviews&format=json&moduleId=' + dataId + '&cid=' + dataCid + '&apiKey=' + dataApiKey + '&reviewSort=' + dataReviewSort + '&' + token + '=1' );
+
+    if (dataCid && dataReviewSort && dataApiKey && token) {
         try {
             const response = await fetch(url, {method: 'GET'});
 
