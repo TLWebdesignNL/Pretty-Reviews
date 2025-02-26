@@ -23,4 +23,12 @@
             <item>Improved / Fixed language strings.</item>
         </fix>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.3</version>
+        <fix>
+            <item>Improved ajax call security.</item>
+        </fix>
+    </changelog>
 </changelogs>

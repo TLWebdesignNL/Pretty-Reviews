@@ -28,7 +28,7 @@
         <version>1.0.1</version>
         <downloads>
             <downloadurl type="full" format="zip">
-                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.0.1.zip
+                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.0..zip
             </downloadurl>
         </downloads>
         <tags>
@@ -56,6 +56,27 @@
             <tag>stable</tag>
         </tags>
         <sha256>fa0b17dff82f85597cdfc06d8febc06e4f69066c289821cd1c9b816f1d6596cd</sha256>
+        <maintainer>TLWebdesign</maintainer>
+        <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
+        <section>Updates</section>
+        <targetplatform name="joomla" version="4|5"/>
+        <client>site</client>
+    </update>
+    <update>
+        <name>Pretty Reviews 1.0.3</name>
+        <description/>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.3</version>
+        <downloads>
+            <downloadurl type="full" format="zip">
+                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.0.3.zip
+            </downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <sha256></sha256>
         <maintainer>TLWebdesign</maintainer>
         <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
         <section>Updates</section>

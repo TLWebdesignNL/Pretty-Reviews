@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_PRETTYREVIEWS</name>
-    <creationDate>2025-02-22</creationDate>
+    <creationDate>2025-02-26</creationDate>
     <author>Tom van der Laan</author>
     <authorEmail>info@tlwebdesign.nl</authorEmail>
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.0.1</version>
+    <version>1.0.3</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -70,8 +70,14 @@
                     <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
                 </field>
                 <field
+                        name="secret"
+                        required="true"
+                        type="hidden"
+                        default=""
+                />
+                <field
                         type="CustomPretty"
-                        name="test123"
+                        name="CustomPretty"
                         addfieldprefix="TLWeb\Module\Prettyreviews\Site\Field"
                 />
             </fieldset>

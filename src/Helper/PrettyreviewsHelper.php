@@ -11,10 +11,12 @@
 namespace TLWeb\Module\Prettyreviews\Site\Helper;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Access\Exception\NotAllowed;
 use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Helper\ModuleHelper;
-use Joomla\CMS\Table\Module;
+use Exception;
+
 
 \defined('_JEXEC') or die;
 
@@ -34,16 +36,37 @@ class PrettyreviewsHelper
      */
     public function updateGoogleReviewsAjax(): bool
     {
-	    if (!Session::checkToken('get')) {
-		    return json_encode(['success' => false, 'message' => 'Invalid Token']);
-	    }
+
         $input = Factory::getApplication()->input;
 
-        // Get the Google reviews
+	    // Get the Google reviews
         $moduleId      = $input->getString('moduleId');
         $cid           = $input->getString('cid');
         $apiKey        = $input->getString('apiKey');
         $reviewSort    = $input->getString('reviewSort');
+	    $secret        = $input->getString('secret');
+
+	    $module = ModuleHelper::getModuleById($moduleId);
+
+	    // Check if the module is 'mod_prettyreviews'
+	    if ($module && $module->module === 'mod_prettyreviews')
+	    {
+		    // Decode module params
+		    $params = json_decode($module->params, true);
+
+		    // Extract required parameters
+		    $dbSecret = $params['secret'] ?? null;
+
+		    // Validate parameters
+		    if (empty($dbSecret) || empty($secret) || $secret != $dbSecret)
+		    {
+			    throw new Notallowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
+		    }
+	    } else {
+		    throw new \Exception(Text::_('Module not Found'), 404);
+	    }
+
+	    // fetch reviews
         $googleReviews = $this->getGoogleReviews($cid, $apiKey, $reviewSort);
 
         $googleReviewsArray = json_decode(json_encode($googleReviews), true);

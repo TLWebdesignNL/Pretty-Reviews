@@ -24,11 +24,12 @@ class CustomPrettyField extends FormField
             "data-id" => $input->getInt('id'),
             "data-cid" => (isset($moduleParams->cid)) ? $moduleParams->cid : null,
             "data-apikey" => (isset($moduleParams->apikey)) ? $moduleParams->apikey : null,
-            "data-reviewsort" => (isset($moduleParams->reviewsort)) ? $moduleParams->reviewsort : null
+            "data-reviewsort" => (isset($moduleParams->reviewsort)) ? $moduleParams->reviewsort : null,
+            "data-secret" => (isset($moduleParams->secret)) ? $moduleParams->secret : null
         );
         $toolbar = Toolbar::getInstance('toolbar');
         $toolbar->standardButton('updateReviews')
-            ->icon('fa fa-download')
+            ->icon('fas fa-download')
             ->text('update Reviews')
             ->task('')
             ->attributes($attributes)

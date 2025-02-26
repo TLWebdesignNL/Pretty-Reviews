@@ -5,19 +5,28 @@ const renderMessage = (type, msg) => {
         alert(msg);
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    let secretField = document.getElementById("jform_params_secret");
+
+    if (secretField && secretField.value.trim() === "") {
+        secretField.value = crypto.randomUUID(); // Generate and set GUID
+    }
+});
 async function updateReviews(el) {
     el.setAttribute('disabled', '');
     let dataId  = el.getAttribute('data-id');
     let dataCid = el.getAttribute('data-cid');
     let dataReviewSort = el.getAttribute('data-reviewsort');
     let dataApiKey = el.getAttribute('data-apiKey');
+    let dataSecret = el.getAttribute('data-secret');
     let tokenElement = document.querySelector('input[type="hidden"][value="1"]');
-    let token = csrfInput.getAttribute('name') : null;
+    let token = tokenElement.getAttribute('name');
 
     let JoomlaRoot = prettyReviewsOptions.baseUrl;
-    const url = new URL(JoomlaRoot + 'index.php?option=com_ajax&module=prettyreviews&method=updateGoogleReviews&format=json&moduleId=' + dataId + '&cid=' + dataCid + '&apiKey=' + dataApiKey + '&reviewSort=' + dataReviewSort + '&' + token + '=1' );
+    const url = new URL(JoomlaRoot + 'index.php?option=com_ajax&module=prettyreviews&method=updateGoogleReviews&format=json&moduleId=' + dataId + '&cid=' + dataCid + '&apiKey=' + dataApiKey + '&reviewSort=' + dataReviewSort + '&secret=' + dataSecret );
 
-    if (dataCid && dataReviewSort && dataApiKey && token) {
+    if (dataCid && dataReviewSort && dataApiKey && dataSecret) {
         try {
             const response = await fetch(url, {method: 'GET'});
 
