@@ -49,7 +49,7 @@ class PrettyreviewsHelper
 	    $module = ModuleHelper::getModuleById($moduleId);
 
 	    // Check if the module is 'mod_prettyreviews'
-	    if ($module && $module->module === 'mod_prettyreviews')
+	    if ($module && ($module->module === 'mod_prettyreviews' || $module->name === 'prettyreviews'))
 	    {
 		    // Decode module params
 		    $params = json_decode($module->params, true);
