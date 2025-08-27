@@ -25,7 +25,7 @@ $googleReviews = $reviewdata;
 
 <div class="prettyReviewsWrapper">
     <div class="overal-rating text-center">
-        <p class="h5">Onze klanten beoordelen ons met een gemiddelde van <span class="text-primary"><?php echo $reviewdata['rating']; ?>/5!</span><br>Gebaseerd op <span class="text-secondary"><?php echo $googleReviews['ratingsCount']; ?></span> recenties</p>
+        <p class="h5"><?php echo Text::sprintf('MOD_PRETTYREVIEWS_OVERAL_RATING_HEADING', $reviewdata['rating'], $googleReviews['ratingsCount'] ); ?></p>
     </div>
     <hr class="text-muted">
     <div id="prettyReviewsCarousel<?php echo $module->id; ?>"

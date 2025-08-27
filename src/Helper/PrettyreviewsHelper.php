@@ -56,11 +56,13 @@ class PrettyreviewsHelper
 
 		    // Extract required parameters
 		    $dbSecret = $params['secret'] ?? null;
+		    $limit = $params['limit'] ?? null;
+		    $displaySort = $params['displaysort'] ?? "newest";
 
 		    // Validate parameters
 		    if (empty($dbSecret) || empty($secret) || $secret != $dbSecret)
 		    {
-			    throw new Notallowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
+			    throw new NotAllowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
 		    }
 	    } else {
 		    throw new \Exception(Text::_('Module not Found'), 404);
@@ -76,7 +78,7 @@ class PrettyreviewsHelper
         $this->saveJsonFile($googleReviewsArray,JPATH_ROOT . '/media/mod_prettyreviews/rawdata.json');
 
         // Get existing reviews from JSON file
-        $data = $this->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json');
+        $data = $this->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json', $limit, $displaySort);;
 
         // Update data with new reviews
         $data = $this->updateRatingAndReviews($googleReviews, $data);
@@ -165,11 +167,45 @@ class PrettyreviewsHelper
      *
      * @since 1.0.0
      */
-    public function getJsonFile($jsonFilePath = JPATH_ROOT . '/media/mod_prettyreviews/data.json'): ?array
+    public function getJsonFile($jsonFilePath = JPATH_ROOT . '/media/mod_prettyreviews/data.json', $limit = null, $sort = "newest"): ? array
     {
         if (File::exists($jsonFilePath)) {
             $jsonContents = file_get_contents($jsonFilePath);
-            return json_decode($jsonContents, true);
+            $contentArray = json_decode($jsonContents, true);
+
+            if (!is_array($contentArray)) {
+                return null;
+            }
+
+            if (isset($contentArray['reviews']) && is_array($contentArray['reviews'])) {
+                $reviews = $contentArray['reviews'];
+
+                // Sort: default newest (by timestamp key desc) or randomize preserving keys
+                if ($sort === 'random') {
+                    $keys = array_keys($reviews);
+                    shuffle($keys);
+                    $shuffled = [];
+                    foreach ($keys as $k) {
+                        $shuffled[$k] = $reviews[$k];
+                    }
+                    $reviews = $shuffled;
+                } else {
+                    // newest first by timestamp (numeric keys)
+                    krsort($reviews, SORT_NUMERIC);
+                }
+
+                // Limit, if provided
+                if ($limit !== null) {
+                    $limit = (int) $limit;
+                    if ($limit > 0) {
+                        $reviews = array_slice($reviews, 0, $limit, true);
+                    }
+                }
+
+                $contentArray['reviews'] = $reviews;
+            }
+
+	        return $contentArray;
         }
 
         return null;
@@ -187,6 +223,10 @@ class PrettyreviewsHelper
     {
 
         $jsonContents = json_encode($data);
+
+	    if ($jsonContents === false) {
+	        return false;
+	    }
 
         // Save the JSON data to the file
         return File::write($jsonFilePath, $jsonContents);

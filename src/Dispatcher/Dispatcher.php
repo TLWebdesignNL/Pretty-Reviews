@@ -36,7 +36,17 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
     {
         $data = parent::getLayoutData();
 	    $moduleId = (isset($data['module']->id)) ? $data['module']->id : "";
-	    $data['reviewdata'] = $this->getHelperFactory()->getHelper('PrettyreviewsHelper')->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json');
-	    return $data;
+	    $moduleId = (isset($data['module']->id)) ? $data['module']->id : "";
+        // Decode module params
+	    $params = json_decode($data['module']->params, true);
+
+	    // Extract required parameters
+	    $limit = $params['limit'] ?? null;
+	    $displaySort = $params['displaysort'] ?? "newest";
+
+		// Get Reviews from JSON File
+		$data['reviewdata'] = $this->getHelperFactory()->getHelper('PrettyreviewsHelper')->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json', $limit, $displaySort);
+
+		return $data;
     }
 }

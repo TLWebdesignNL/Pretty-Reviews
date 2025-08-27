@@ -70,6 +70,25 @@
                     <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
                 </field>
                 <field
+                        name="limit"
+                        type="number"
+                        label="MOD_PRETTYREVIEWS_FIELD_LIMIT_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_LIMIT_DESC"
+                        default=""
+                        filter="integer"
+                        min="0"
+                />
+                <field
+                        name="displaysort"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_DISPLAYSORT_LABEL"
+                        default="newest"
+                        class="btn-group"
+                >
+                    <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
+                    <option value="random">MOD_PRETTYREVIEWS_RANDOM</option>
+                </field>
+                <field
                         name="secret"
                         required="true"
                         type="hidden"
