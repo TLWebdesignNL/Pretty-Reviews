@@ -31,4 +31,14 @@
             <item>Improved ajax call security.</item>
         </fix>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.0.4</version>
+        <fix>
+            <item>Removed dumb hardcoded text.</item>
+        </fix>
+        <addition>Option to limit amount of reviews to be displayed</addition>
+        <addition>Option to display reviews by newest or random.</addition>
+    </changelog>
 </changelogs>
