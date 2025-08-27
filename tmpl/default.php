@@ -59,10 +59,12 @@ $googleReviews = $reviewdata;
                                 <p class="review-time">
                                     <?php echo PrettyreviewsHelper::timeAgo($review['time']); ?>
                                 </p>
-                                <p class="text-muted">
-                                    <i class="fas fa-quote-left pe-2"></i>
-                                    <?php echo $review['text']; ?>
-                                </p>
+                                <?php if (!empty($review['text'])) : ?>
+                                    <p class="text-muted">
+                                        <i class="fas fa-quote-left pe-2"></i>
+                                        <?php echo $review['text']; ?>
+                                    </p>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <ul class="list-unstyled d-flex justify-content-center text-warning mb-4">

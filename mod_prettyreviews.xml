@@ -7,7 +7,7 @@
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.0.4</version>
+    <version>1.1.0</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -87,6 +87,17 @@
                 >
                     <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
                     <option value="random">MOD_PRETTYREVIEWS_RANDOM</option>
+                </field>
+                <field
+                        name="hideemptyreviews"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_HIDEEMPTYREVIEWS_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_HIDEEMPTYREVIEWS_DESC"
+                        default="0"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
                 </field>
                 <field
                         name="secret"

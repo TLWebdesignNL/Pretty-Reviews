@@ -58,6 +58,7 @@ class PrettyreviewsHelper
 		    $dbSecret = $params['secret'] ?? null;
 		    $limit = $params['limit'] ?? null;
 		    $displaySort = $params['displaysort'] ?? "newest";
+		    $hideEmpty = $params['hideemptyreviews'] ?? 0;
 
 		    // Validate parameters
 		    if (empty($dbSecret) || empty($secret) || $secret != $dbSecret)
@@ -78,7 +79,7 @@ class PrettyreviewsHelper
         $this->saveJsonFile($googleReviewsArray,JPATH_ROOT . '/media/mod_prettyreviews/rawdata.json');
 
         // Get existing reviews from JSON file
-        $data = $this->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json', $limit, $displaySort);;
+        $data = $this->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json', $limit, $displaySort, $hideEmpty);
 
         // Update data with new reviews
         $data = $this->updateRatingAndReviews($googleReviews, $data);
@@ -167,7 +168,7 @@ class PrettyreviewsHelper
      *
      * @since 1.0.0
      */
-    public function getJsonFile($jsonFilePath = JPATH_ROOT . '/media/mod_prettyreviews/data.json', $limit = null, $sort = "newest"): ? array
+    public function getJsonFile($jsonFilePath = JPATH_ROOT . '/media/mod_prettyreviews/data.json', $limit = null, $sort = "newest", $hideEmpty = 0): ? array
     {
         if (File::exists($jsonFilePath)) {
             $jsonContents = file_get_contents($jsonFilePath);
@@ -179,6 +180,18 @@ class PrettyreviewsHelper
 
             if (isset($contentArray['reviews']) && is_array($contentArray['reviews'])) {
                 $reviews = $contentArray['reviews'];
+
+				// remove empty reviews
+                if ((int) $hideEmpty === 1) {
+                    $reviews = array_filter($reviews, static function ($r) {
+                        if (is_array($r)) {
+                            $txt = isset($r['text']) ? trim((string) $r['text']) : '';
+                        } else {
+                            $txt = '';
+                        }
+                        return $txt !== '';
+                    });
+                }
 
                 // Sort: default newest (by timestamp key desc) or randomize preserving keys
                 if ($sort === 'random') {

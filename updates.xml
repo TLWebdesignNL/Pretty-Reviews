@@ -84,20 +84,20 @@
         <client>site</client>
     </update>
     <update>
-        <name>Pretty Reviews 1.0.4</name>
+        <name>Pretty Reviews 1.1.0</name>
         <description/>
         <element>mod_prettyreviews</element>
         <type>module</type>
-        <version>1.0.4</version>
+        <version>1.1.0</version>
         <downloads>
             <downloadurl type="full" format="zip">
-                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.0.4.zip
+                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.1.0.zip
             </downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>
         </tags>
-        <sha256>58fb01319c798bf90193cc14fbf970ef85c174e3fc41c1077c79496075b063a3</sha256>
+        <sha256></sha256>
         <maintainer>TLWebdesign</maintainer>
         <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
         <section>Updates</section>

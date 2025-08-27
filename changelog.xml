@@ -34,11 +34,13 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
-        <version>1.0.4</version>
+        <version>1.1.0</version>
         <fix>
             <item>Removed dumb hardcoded text.</item>
+            <item>Fix bug with ajax request in Joomla 5</item>
         </fix>
         <addition>Option to limit amount of reviews to be displayed</addition>
         <addition>Option to display reviews by newest or random.</addition>
+        <addition>Option to hide reviews without text.</addition>
     </changelog>
 </changelogs>
