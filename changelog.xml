@@ -43,4 +43,17 @@
         <addition>Option to display reviews by newest or random.</addition>
         <addition>Option to hide reviews without text.</addition>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.1.1</version>
+        <fix>
+            <item>Added missing license in php file</item>
+        </fix>
+        <addition>
+            <item>Option to limit amount of reviews to be displayed</item>
+            <item>Option to display reviews by newest or random.</item>
+            <item>Option to hide reviews without text.</item>
+        </addition>
+    </changelog>
 </changelogs>
