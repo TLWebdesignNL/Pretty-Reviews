@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     TLWeb.Module
+ * @subpackage  mod_prettyreviews
+ *
+ * @copyright   Copyright (C) 2024 TLWebdesign. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 namespace TLWeb\Module\Prettyreviews\Site\Field;
 
