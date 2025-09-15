@@ -56,4 +56,12 @@
             <item>Option to hide reviews without text.</item>
         </addition>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.1.2</version>
+        <fix>
+            <item>Made the module fetching more robust with fallback</item>
+        </fix>
+    </changelog>
 </changelogs>
