@@ -15,8 +15,7 @@ use Joomla\CMS\Access\Exception\NotAllowed;
 use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Helper\ModuleHelper;
-use Exception;
-
+use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
 
@@ -40,7 +39,7 @@ class PrettyreviewsHelper
         $input = Factory::getApplication()->input;
 
 	    // Get the Google reviews
-        $moduleId      = $input->getString('moduleId');
+        $moduleId      = $input->getInt('moduleId');
         $cid           = $input->getString('cid');
         $apiKey        = $input->getString('apiKey');
         $reviewSort    = $input->getString('reviewSort');
@@ -48,25 +47,35 @@ class PrettyreviewsHelper
 
 	    $module = ModuleHelper::getModuleById($moduleId);
 
-	    // Check if the module is 'mod_prettyreviews'
-	    if ($module && ($module->module === 'mod_prettyreviews' || $module->name === 'prettyreviews'))
+	    if (!$module || empty($module->id))
 	    {
-		    // Decode module params
-		    $params = json_decode($module->params, true);
+			$id = (int) $moduleId;
+			$db = Factory::getContainer()->get(DatabaseInterface::class);
+			$q  = $db->getQuery(true)
+				    ->select('*')
+				    ->from('#__modules')
+				    ->where('id = ' . $moduleId);
+			    $db->setQuery($q);
+			    $module = $db->loadObject();
 
-		    // Extract required parameters
-		    $dbSecret = $params['secret'] ?? null;
-		    $limit = $params['limit'] ?? null;
-		    $displaySort = $params['displaysort'] ?? "newest";
-		    $hideEmpty = $params['hideemptyreviews'] ?? 0;
-
-		    // Validate parameters
-		    if (empty($dbSecret) || empty($secret) || $secret != $dbSecret)
-		    {
-			    throw new NotAllowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
+		     if ($module->id != $moduleId) {
+			    throw new \Exception(Text::_('Module not Found'), 404);
 		    }
-	    } else {
-		    throw new \Exception(Text::_('Module not Found'), 404);
+	    }
+
+	    // Decode module params
+	    $params = json_decode($module->params, true);
+
+	    // Extract required parameters
+	    $dbSecret = $params['secret'] ?? null;
+	    $limit = $params['limit'] ?? null;
+	    $displaySort = $params['displaysort'] ?? "newest";
+	    $hideEmpty = $params['hideemptyreviews'] ?? 0;
+
+	    // Validate parameters
+	    if (empty($dbSecret) || empty($secret) || $secret != $dbSecret)
+	    {
+		    throw new NotAllowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
 	    }
 
 	    // fetch reviews
