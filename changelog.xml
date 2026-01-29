@@ -64,4 +64,12 @@
             <item>Made the module fetching more robust with fallback</item>
         </fix>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.1.3</version>
+        <addition>
+            <item>Joomla 6 compatibility</item>
+        </addition>
+    </changelog>
 </changelogs>

@@ -13,7 +13,6 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Extension\Service\Provider\HelperFactory;
 use Joomla\CMS\Extension\Service\Provider\Module;
 use Joomla\CMS\Extension\Service\Provider\ModuleDispatcherFactory;
-use Joomla\CMS\Toolbar\ToolbarHelper;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
 

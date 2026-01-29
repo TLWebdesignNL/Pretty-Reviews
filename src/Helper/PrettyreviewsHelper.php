@@ -12,7 +12,7 @@ namespace TLWeb\Module\Prettyreviews\Site\Helper;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Access\Exception\NotAllowed;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\Database\DatabaseInterface;
@@ -179,7 +179,7 @@ class PrettyreviewsHelper
      */
     public function getJsonFile($jsonFilePath = JPATH_ROOT . '/media/mod_prettyreviews/data.json', $limit = null, $sort = "newest", $hideEmpty = 0): ? array
     {
-        if (File::exists($jsonFilePath)) {
+        if (is_file($jsonFilePath)) {
             $jsonContents = file_get_contents($jsonFilePath);
             $contentArray = json_decode($jsonContents, true);
 

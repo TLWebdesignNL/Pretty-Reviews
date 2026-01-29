@@ -12,7 +12,6 @@
 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Uri\Uri;
 use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 HTMLHelper::_('bootstrap.carousel', 'prettyReviewsCarousel' . $module->id);
