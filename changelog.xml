@@ -79,5 +79,8 @@
         <fix>
             <item>Language constant for "View all reviews" instead of hardcoded Dutch. Ouch!</item>
         </fix>
+        <addition>
+            <item>German Translation</item>
+        </addition>
     </changelog>
 </changelogs>
