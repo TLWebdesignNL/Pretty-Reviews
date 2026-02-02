@@ -108,7 +108,7 @@ $googleReviews = $reviewdata;
     </div>
     <div class="w-100 text-center">
         <?php if (isset($googleReviews['url']) && $googleReviews['url']) : ?>
-            <a href="<?php echo $googleReviews['url']; ?>" target="_blank" class="btn btn-primary">Bekijk alle reviews</a>
+            <a href="<?php echo $googleReviews['url']; ?>" target="_blank" class="btn btn-primary"><?php echo Text::_('MOD_PRETTYREVIEW_VIEWALLREVIEWS'); ?></a>
         <?php endif; ?>
     </div>
 </div>
