@@ -38,50 +38,70 @@ jobs:
       - name: Append entry to updates.xml
         env:
           VERSION: ${{ steps.vars.outputs.version }}
+          TAG: ${{ steps.vars.outputs.tag }}
           SHA256: ${{ steps.sha256.outputs.value }}
-          ZIP_URL: ${{ steps.vars.outputs.zip_url }}
         run: |
           python3 - <<'EOF'
-          import os
+          import re, os
 
           version = os.environ["VERSION"]
+          tag     = os.environ["TAG"]
           sha256  = os.environ["SHA256"]
-          url     = os.environ["ZIP_URL"]
-
-          new_entry = (
-              "    <update>\n"
-              f"        <name>Pretty Reviews {version}</name>\n"
-              "        <description/>\n"
-              "        <element>mod_prettyreviews</element>\n"
-              "        <type>module</type>\n"
-              f"        <version>{version}</version>\n"
-              "        <downloads>\n"
-              "            <downloadurl type=\"full\" format=\"zip\">\n"
-              f"                {url}\n"
-              "            </downloadurl>\n"
-              "        </downloads>\n"
-              "        <tags>\n"
-              "            <tag>stable</tag>\n"
-              "        </tags>\n"
-              f"        <sha256>{sha256}</sha256>\n"
-              "        <maintainer>TLWebdesign</maintainer>\n"
-              "        <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>\n"
-              "        <section>Updates</section>\n"
-              "        <targetplatform name=\"joomla\" version=\"4|5|6\"/>\n"
-              "        <client>site</client>\n"
-              "    </update>"
-          )
+          repo    = os.environ["GITHUB_REPOSITORY"]
 
           with open("updates.xml", "r") as f:
               content = f.read()
 
           if f"<version>{version}</version>" in content:
-              print(f"Entry for {version} already exists, skipping.")
+              print(f"Version {version} already exists, skipping.")
+              raise SystemExit(0)
+
+          # Extract the last <update> block as a template
+          blocks = re.findall(r'<update>.*?</update>', content, re.DOTALL)
+          if not blocks:
+              raise SystemExit("No existing <update> block found to use as template.")
+          last = blocks[-1]
+
+          # Get old tag from last block's download URL to swap it out
+          old_tag_match = re.search(r'archive/refs/tags/([^\s<"]+)', last)
+          if old_tag_match:
+              old_tag = old_tag_match.group(1).rstrip('.zip')
+              new_block = last.replace(
+                  f"archive/refs/tags/{old_tag}",
+                  f"archive/refs/tags/{tag}"
+              )
           else:
-              content = content.replace("</updates>", new_entry + "\n</updates>")
-              with open("updates.xml", "w") as f:
-                  f.write(content)
-              print(f"Added entry for Pretty Reviews {version} (sha256: {sha256})")
+              new_block = re.sub(
+                  r'(archive/refs/tags/)[^\s<"]+',
+                  rf'\g<1>{tag}.zip',
+                  last
+              )
+
+          # Update <version> tag
+          old_version = re.search(r'<version>([^<]+)</version>', last).group(1).strip()
+          new_block = new_block.replace(
+              f'<version>{old_version}</version>',
+              f'<version>{version}</version>'
+          )
+
+          # Update version in <name> if present
+          new_block = re.sub(
+              r'(<name>[^<]*?)' + re.escape(old_version) + r'([^<]*</name>)',
+              lambda m: m.group(0).replace(old_version, version, 1),
+              new_block
+          )
+
+          # Update sha256
+          new_block = re.sub(r'<sha256>[a-f0-9]+</sha256>', f'<sha256>{sha256}</sha256>', new_block)
+
+          # Detect indentation of the last block and match it
+          indent = re.match(r'(\s*)', last).group(1)
+          new_block = indent + new_block.lstrip()
+
+          content = content.replace('</updates>', new_block + '\n</updates>')
+          with open("updates.xml", "w") as f:
+              f.write(content)
+          print(f"Added version {version} (sha256: {sha256})")
           EOF
 
       - name: Commit and push updated updates.xml
