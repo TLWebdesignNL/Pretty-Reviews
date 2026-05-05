@@ -156,10 +156,6 @@ class PrettyreviewsHelper
 
         $googleReviews = $this->fetchFromGoogle($cid, $apiKey, $reviewSort);
 
-        if ($googleReviews === null) {
-            return false;
-        }
-
         $cachePath = $this->cachePath($moduleId);
         $raw       = $this->readJson($cachePath);
         $merged    = $this->mergeReviews($googleReviews, $raw);
@@ -204,11 +200,11 @@ class PrettyreviewsHelper
      * @param   string  $apiKey      Google API key.
      * @param   string  $reviewSort  Google reviews_sort value.
      *
-     * @return  object|null
+     * @return  object
      *
      * @since   1.2.0
      */
-    private function fetchFromGoogle(string $cid, string $apiKey, string $reviewSort): ?object
+    private function fetchFromGoogle(string $cid, string $apiKey, string $reviewSort): object
     {
         $url = 'https://maps.googleapis.com/maps/api/place/details/json'
             . '?place_id=' . urlencode($cid)
@@ -221,16 +217,51 @@ class PrettyreviewsHelper
             $http     = HttpFactory::getHttp();
             $response = $http->get($url, [], 60);
         } catch (\Throwable $e) {
-            return null;
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_REQUEST_FAILED'), 502, $e);
         }
 
         if ((int) $response->code !== 200) {
-            return null;
+            throw new \RuntimeException(
+                Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', (int) $response->code),
+                502
+            );
         }
 
         $decoded = json_decode((string) $response->body);
 
-        return $decoded instanceof \stdClass ? $decoded : null;
+        if (!$decoded instanceof \stdClass) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_INVALID_RESPONSE'), 502);
+        }
+
+        $status = (string) ($decoded->status ?? '');
+
+        if ($status !== '' && $status !== 'OK') {
+            $message = trim((string) ($decoded->error_message ?? ''));
+
+            throw new \RuntimeException(
+                Text::sprintf(
+                    'MOD_PRETTYREVIEWS_ERROR_GOOGLE_STATUS',
+                    $status,
+                    $message !== '' ? $message : $status
+                ),
+                502
+            );
+        }
+
+        if (!isset($decoded->result) || !is_object($decoded->result)) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_EMPTY_RESULT'), 502);
+        }
+
+        if (
+            !isset($decoded->result->rating)
+            && !isset($decoded->result->user_ratings_total)
+            && !isset($decoded->result->url)
+            && !isset($decoded->result->reviews)
+        ) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_EMPTY_RESULT'), 502);
+        }
+
+        return $decoded;
     }
 
     /**

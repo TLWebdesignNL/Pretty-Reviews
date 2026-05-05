@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * @package     TLWeb.Module
  * @subpackage  mod_prettyreviews
@@ -9,26 +12,55 @@
 
 namespace TLWeb\Module\Prettyreviews\Site\Field;
 
-defined('_JEXEC') or die('Restricted access');
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\FormField;
+use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\Toolbar;
-use Joomla\Input\Input;
 use Joomla\CMS\Uri\Uri;
+use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 class CustomPrettyField extends FormField
 {
-    protected function getInput() {
-        return "";
+    protected function getInput(): string
+    {
+        return '';
     }
-    protected function getLabel() {
 
-        $input = Factory::getApplication()->input;
+    protected function getLabel(): string
+    {
+        $app   = Factory::getApplication();
+        $input = $app->getInput();
+
+        if ($input->getInt('prettyreviewsAjax') === 1) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            $app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+
+            try {
+                echo new JsonResponse((new PrettyreviewsHelper())->updateGoogleReviewsAjax());
+            } catch (\Throwable $e) {
+                $code = (int) $e->getCode();
+
+                if ($code >= 400 && $code < 600) {
+                    $app->setHeader('status', $code, true);
+                }
+
+                echo new JsonResponse(null, $e->getMessage(), true);
+            }
+
+            $app->close();
+        }
 
         $attributes = [
-            "data-id" => $input->getInt('id'),
+            'data-id'    => $input->getInt('id'),
+            'data-token' => Session::getFormToken(),
         ];
+
         $toolbar = Toolbar::getInstance('toolbar');
         $toolbar->standardButton('updateReviews')
             ->icon('fas fa-download')
@@ -38,12 +70,16 @@ class CustomPrettyField extends FormField
             ->onclick('updateReviews(this)')
             ->listCheck(false);
 
-        $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+        $wa = $app->getDocument()->getWebAssetManager();
         $wa->registerAndUseScript('prettyreviews', 'media/mod_prettyreviews/js/prettyreviews.js', [], ['defer' => true]);
 
-        $baseUri = Uri::root();
-        $inlineScript = 'var prettyReviewsOptions = ' . json_encode(['baseUrl' => $baseUri]) . ';';
+        $endpoint = Uri::base()
+            . 'index.php?option=com_modules&view=module&layout=edit&id='
+            . $input->getInt('id')
+            . '&prettyreviewsAjax=1';
+        $inlineScript = 'var prettyReviewsOptions = ' . json_encode(['endpoint' => $endpoint]) . ';';
         $wa->addInlineScript($inlineScript);
-        return "";
+
+        return '';
     }
 }

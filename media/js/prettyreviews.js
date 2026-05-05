@@ -10,7 +10,7 @@ async function updateReviews(el) {
     el.setAttribute('disabled', '');
 
     const moduleId = el.getAttribute('data-id');
-    const token    = Joomla.getOptions('csrf.token');
+    const token    = el.getAttribute('data-token') || Joomla.getOptions('csrf.token');
 
     if (!moduleId || !token) {
         renderMessage('error', ['You first need to fill out the Settings and save the module before attempting to retrieve data from Google!']);
@@ -18,8 +18,7 @@ async function updateReviews(el) {
         return;
     }
 
-    const root = prettyReviewsOptions.baseUrl;
-    const url  = root + 'index.php?option=com_ajax&module=prettyreviews&method=updateGoogleReviews&format=json';
+    const url = prettyReviewsOptions.endpoint;
 
     const body = new FormData();
     body.append('moduleId', moduleId);
@@ -27,18 +26,13 @@ async function updateReviews(el) {
 
     try {
         const response = await fetch(url, {method: 'POST', body});
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
         const resp = await response.json();
 
-        if (resp.data === true) {
+        if (response.ok && resp.success === true && resp.data === true) {
             renderMessage('success', ['Reviews have been updated!']);
         } else {
             console.error(resp);
-            renderMessage('error', ['Something went wrong with the Ajax Request!']);
+            renderMessage('error', [resp.message || 'Something went wrong with the Ajax Request!']);
         }
     } catch (err) {
         console.error(err);

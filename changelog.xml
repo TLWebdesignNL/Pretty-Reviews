@@ -97,6 +97,7 @@
         <change>
             <item>Removed the unused "secret" field from the module parameters (breaking: existing installs simply ignore the stale value).</item>
             <item>Helper API split into loadRaw / present / refreshFromGoogle. Cache files no longer overwritten with a filtered subset on every refresh.</item>
+            <item>Admin refresh now returns clean JSON feedback and reports Google Places API errors instead of treating empty or rejected responses as successful updates.</item>
         </change>
     </changelog>
 </changelogs>
