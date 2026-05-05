@@ -34,20 +34,19 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
      */
     protected function getLayoutData(): array
     {
-        $data = parent::getLayoutData();
-	    $moduleId = (isset($data['module']->id)) ? $data['module']->id : "";
-	    $moduleId = (isset($data['module']->id)) ? $data['module']->id : "";
-        // Decode module params
-	    $params = json_decode($data['module']->params, true);
+        $data     = parent::getLayoutData();
+        $moduleId = (int) ($data['module']->id ?? 0);
+        $params   = json_decode($data['module']->params, true) ?? [];
 
-	    // Extract required parameters
-	    $limit = $params['limit'] ?? null;
-	    $displaySort = $params['displaysort'] ?? "newest";
-	    $hideEmpty = $params['hideemptyreviews'] ?? 0;
+        $helper = $this->getHelperFactory()->getHelper('PrettyreviewsHelper');
+        $raw    = $helper->loadRaw($moduleId);
 
-		// Get Reviews from JSON File
-		$data['reviewdata'] = $this->getHelperFactory()->getHelper('PrettyreviewsHelper')->getJsonFile(JPATH_ROOT . '/media/mod_prettyreviews/data-' . $moduleId . '.json', $limit, $displaySort, $hideEmpty);
+        $data['reviewdata'] = $helper->present($raw, [
+            'limit'     => $params['limit'] ?? null,
+            'sort'      => $params['displaysort'] ?? 'newest',
+            'hideEmpty' => $params['hideemptyreviews'] ?? 0,
+        ]);
 
-		return $data;
+        return $data;
     }
 }

@@ -24,16 +24,11 @@ class CustomPrettyField extends FormField
     }
     protected function getLabel() {
 
-        $moduleParams = $this->form->getValue('params');
-        $input   = Factory::getApplication()->input;
+        $input = Factory::getApplication()->input;
 
-        $attributes = array(
+        $attributes = [
             "data-id" => $input->getInt('id'),
-            "data-cid" => (isset($moduleParams->cid)) ? $moduleParams->cid : null,
-            "data-apikey" => (isset($moduleParams->apikey)) ? $moduleParams->apikey : null,
-            "data-reviewsort" => (isset($moduleParams->reviewsort)) ? $moduleParams->reviewsort : null,
-            "data-secret" => (isset($moduleParams->secret)) ? $moduleParams->secret : null
-        );
+        ];
         $toolbar = Toolbar::getInstance('toolbar');
         $toolbar->standardButton('updateReviews')
             ->icon('fas fa-download')

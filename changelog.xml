@@ -83,4 +83,20 @@
             <item>German Translation</item>
         </addition>
     </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.2.0</version>
+        <security>
+            <item>AJAX refresh endpoint now requires the Joomla CSRF form token (POST) and a per-module core.edit permission check.</item>
+            <item>Google API key, Place ID and review-sort are no longer rendered as data-* attributes or sent in the request URL — credentials are read server-side from the module record.</item>
+            <item>Replaced raw cURL with HttpFactory; TLS certificate verification is now always on.</item>
+            <item>SQL in the module-lookup fallback now uses bound parameters and quoteName().</item>
+            <item>All review fields are HTML-escaped on output; profile photo and author URLs are validated to use http(s) schemes.</item>
+        </security>
+        <change>
+            <item>Removed the unused "secret" field from the module parameters (breaking: existing installs simply ignore the stale value).</item>
+            <item>Helper API split into loadRaw / present / refreshFromGoogle. Cache files no longer overwritten with a filtered subset on every refresh.</item>
+        </change>
+    </changelog>
 </changelogs>
