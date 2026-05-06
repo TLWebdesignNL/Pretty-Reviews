@@ -230,4 +230,25 @@
         <targetplatform name="joomla" version="4|5|6"/>
         <client>site</client>
     </update>
+<update>
+        <name>Pretty Reviews 1.4.0</name>
+        <description/>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
+        <version>1.4.0</version>
+        <downloads>
+            <downloadurl type="full" format="zip">
+                https://github.com/TLWebdesignNL/Pretty-Reviews/archive/refs/tags/V1.4.0.zip
+            </downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <sha256>dac8c5bc4dd9168c62e166d466174a80fcc41309996d908b06f6b96462cb4932</sha256>
+        <maintainer>TLWebdesign</maintainer>
+        <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
+        <section>Updates</section>
+        <targetplatform name="joomla" version="4|5|6"/>
+        <client>site</client>
+    </update>
 </updates>
