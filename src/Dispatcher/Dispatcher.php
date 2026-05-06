@@ -47,6 +47,19 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
             'hideEmpty' => $params['hideemptyreviews'] ?? 0,
         ]);
 
+        if (isset($data['reviewdata']['reviews']) && is_array($data['reviewdata']['reviews'])) {
+            foreach ($data['reviewdata']['reviews'] as &$review) {
+                if (!is_array($review)) {
+                    continue;
+                }
+
+                $timestamp          = (int) ($review['time'] ?? 0);
+                $review['time_ago'] = $timestamp > 0 ? $helper->timeAgo($timestamp) : '';
+            }
+
+            unset($review);
+        }
+
         return $data;
     }
 }

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * @package     TLWeb.Module
  * @subpackage  mod_prettyreviews
@@ -16,6 +14,7 @@ namespace TLWeb\Module\Prettyreviews\Site\Field;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\FormField;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\Toolbar;
@@ -64,13 +63,17 @@ class CustomPrettyField extends FormField
         $toolbar = Toolbar::getInstance('toolbar');
         $toolbar->standardButton('updateReviews')
             ->icon('fas fa-download')
-            ->text('update Reviews')
+            ->text(Text::_('MOD_PRETTYREVIEWS_UPDATE_REVIEWS'))
             ->task('')
             ->attributes($attributes)
             ->onclick('updateReviews(this)')
             ->listCheck(false);
 
         $wa = $app->getDocument()->getWebAssetManager();
+        Text::script('MOD_PRETTYREVIEWS_UPDATE_MISSING_MODULE_OR_TOKEN');
+        Text::script('MOD_PRETTYREVIEWS_UPDATE_SUCCESS');
+        Text::script('MOD_PRETTYREVIEWS_UPDATE_AJAX_ERROR');
+
         $wa->registerAndUseScript('mod_prettyreviews.admin', 'media/mod_prettyreviews/js/prettyreviews.js', [], ['defer' => true]);
 
         $endpoint = Uri::base()

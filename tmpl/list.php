@@ -11,7 +11,6 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
-use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 $escape  = static fn ($v): string => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
 $safeUrl = static function ($url) use ($escape): string {
@@ -83,7 +82,7 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                     $rawText = mb_substr($rawText, 0, $maxChars) . '…';
                 }
                 $text         = $escape($rawText);
-                $time         = (int) ($review['time'] ?? 0);
+                $timeAgo      = $escape($review['time_ago'] ?? '');
                 $reviewRating = (int) ($review['rating'] ?? 0);
                 ?>
                 <article class="list-group-item px-0 py-3">
@@ -106,9 +105,9 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                                     <?php else : ?>
                                         <span class="fw-semibold d-block"><?php echo $author; ?></span>
                                     <?php endif; ?>
-                                    <?php if ($showDate) : ?>
+                                    <?php if ($showDate && $timeAgo !== '') : ?>
                                         <div class="small text-muted">
-                                            <?php echo $escape(PrettyreviewsHelper::timeAgo($time)); ?>
+                                            <?php echo $timeAgo; ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>

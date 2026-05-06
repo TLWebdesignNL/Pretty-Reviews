@@ -13,6 +13,7 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Installer\InstallerAdapter;
 
 /**
  * Script file of Prettyreviews module
@@ -20,14 +21,23 @@ use Joomla\CMS\Log\Log;
 class mod_prettyreviewsInstallerScript
 {
     /**
+     * @var string
+     */
+    protected string $minimumJoomla = '4.0';
+
+    /**
+     * @var string
+     */
+    protected string $minimumPhp;
+
+    /**
      * Extension script constructor.
      *
      * @return  void
      */
     public function __construct()
     {
-        $this->minimumJoomla = '4.0';
-        $this->minimumPhp    = JOOMLA_MINIMUM_PHP;
+        $this->minimumPhp = JOOMLA_MINIMUM_PHP;
     }
 
     /**
@@ -37,7 +47,7 @@ class mod_prettyreviewsInstallerScript
      *
      * @return  boolean  True on success
      */
-    function install($parent)
+    public function install(InstallerAdapter $parent): bool
     {
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_INSTALL');
 
@@ -51,7 +61,7 @@ class mod_prettyreviewsInstallerScript
      *
      * @return  boolean  True on success
      */
-    function uninstall($parent)
+    public function uninstall(InstallerAdapter $parent): bool
     {
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_UNINSTALL');
 
@@ -65,7 +75,7 @@ class mod_prettyreviewsInstallerScript
      *
      * @return  boolean  True on success
      */
-    function update($parent)
+    public function update(InstallerAdapter $parent): bool
     {
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_UPDATE');
 
@@ -80,7 +90,7 @@ class mod_prettyreviewsInstallerScript
      *
      * @return  boolean  True on success
      */
-    function preflight($type, $parent)
+    public function preflight(string $type, InstallerAdapter $parent): bool
     {
         // Check for the minimum PHP version before continuing
         if (!empty($this->minimumPhp) && version_compare(PHP_VERSION, $this->minimumPhp, '<')) {
@@ -109,7 +119,7 @@ class mod_prettyreviewsInstallerScript
      *
      * @return  boolean  True on success
      */
-    function postflight($type, $parent)
+    public function postflight(string $type, InstallerAdapter $parent): bool
     {
         if ($type == "update") {
             echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_RESAVE_MODULE');

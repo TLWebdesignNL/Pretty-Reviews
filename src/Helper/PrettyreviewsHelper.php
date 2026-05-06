@@ -353,7 +353,7 @@ class PrettyreviewsHelper
      *
      * @return  string
      */
-    public static function timeAgo($timestamp): string
+    public function timeAgo(int $timestamp): string
     {
         $time = time() - $timestamp;
 

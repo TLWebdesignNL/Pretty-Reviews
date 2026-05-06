@@ -12,7 +12,6 @@
 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
-use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 $carouselId = 'prettyReviewsCarousel' . (int) $module->id;
 
@@ -97,7 +96,7 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                         $rawText = mb_substr($rawText, 0, $maxChars) . '…';
                     }
                     $text         = $escape($rawText);
-                    $time         = (int) ($review['time'] ?? 0);
+                    $timeAgo      = $escape($review['time_ago'] ?? '');
                     $reviewRating = (int) ($review['rating'] ?? 0);
                     ?>
                     <div class="carousel-item <?php echo ($slideIdx === 0) ? 'active' : ''; ?>">
@@ -122,9 +121,9 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                                                 <?php else : ?>
                                                     <span class="h6 mb-0 d-block"><?php echo $author; ?></span>
                                                 <?php endif; ?>
-                                                <?php if ($showDate) : ?>
+                                                <?php if ($showDate && $timeAgo !== '') : ?>
                                                 <div class="small text-muted">
-                                                    <?php echo $escape(PrettyreviewsHelper::timeAgo($time)); ?>
+                                                    <?php echo $timeAgo; ?>
                                                 </div>
                                                 <?php endif; ?>
                                             </div>

@@ -12,7 +12,6 @@
 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
-use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 HTMLHelper::_('bootstrap.carousel', 'prettyReviewsCarousel' . $module->id);
 
@@ -42,7 +41,7 @@ $reviews      = $googleReviews['reviews'] ?? [];
 <div class="prettyReviewsWrapper">
     <?php if ($showRatingSummary) : ?>
     <div class="overal-rating text-center">
-        <p class="h5"><?php echo Text::sprintf('MOD_PRETTYREVIEWS_OVERAL_RATING_HEADING', $rating, $ratingsCount); ?></p>
+        <p class="h5"><?php echo Text::sprintf('MOD_PRETTYREVIEWS_OVERALL_RATING_HEADING', $rating, $ratingsCount); ?></p>
     </div>
     <hr class="text-muted">
     <?php endif; ?>
@@ -61,7 +60,7 @@ $reviews      = $googleReviews['reviews'] ?? [];
                     $authorUrl    = $safeUrl($review['author_url'] ?? '');
                     $author       = $escape($review['author_name'] ?? '');
                     $text         = $escape($review['text'] ?? '');
-                    $time         = (int) ($review['time'] ?? 0);
+                    $timeAgo      = $escape($review['time_ago'] ?? '');
                     $reviewRating = (int) ($review['rating'] ?? 0);
                     ?>
                     <div class="carousel-item <?php echo ($slideCounter == 0) ? 'active' : ''; ?>">
@@ -84,9 +83,9 @@ $reviews      = $googleReviews['reviews'] ?? [];
                                             <span class="review-author-name text-primary"><?php echo $author; ?></span>
                                         <?php endif; ?>
                                     </h4>
-                                    <?php if ($showDate) : ?>
+                                    <?php if ($showDate && $timeAgo !== '') : ?>
                                     <p class="review-time">
-                                        <?php echo $escape(PrettyreviewsHelper::timeAgo($time)); ?>
+                                        <?php echo $timeAgo; ?>
                                     </p>
                                     <?php endif; ?>
                                     <?php if ($text !== '') : ?>
@@ -132,7 +131,7 @@ $reviews      = $googleReviews['reviews'] ?? [];
             <?php
             $reviewsUrl = $safeUrl($googleReviews['url'] ?? '');
             if ($showViewAll && $reviewsUrl !== '') : ?>
-                <a href="<?php echo $reviewsUrl; ?>" target="_blank" rel="noopener" class="btn btn-primary"><?php echo Text::_('MOD_PRETTYREVIEW_VIEWALLREVIEWS'); ?></a>
+                <a href="<?php echo $reviewsUrl; ?>" target="_blank" rel="noopener" class="btn btn-primary"><?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?></a>
             <?php endif; ?>
         </div>
     <?php endif; ?>

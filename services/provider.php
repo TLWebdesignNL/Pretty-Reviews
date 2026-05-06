@@ -31,7 +31,7 @@ return new class () implements ServiceProviderInterface {
      *
      * @since   1.0.0
      */
-    public function register(Container $container) :void
+    public function register(Container $container): void
     {
         $container->registerServiceProvider(new ModuleDispatcherFactory('\\TLWeb\\Module\\Prettyreviews'));
         $container->registerServiceProvider(new HelperFactory('\\TLWeb\\Module\\Prettyreviews\\Site\\Helper'));

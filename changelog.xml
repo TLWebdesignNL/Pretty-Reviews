@@ -86,6 +86,17 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>1.4.0</version>
+        <change>
+            <item>Joomla 6 compliance pass: helper methods are used through instances and review dates are prepared in the dispatcher before layout rendering.</item>
+            <item>Admin refresh button and JavaScript feedback now use Joomla language strings.</item>
+            <item>Installer script and service provider signatures were modernized without requiring strict types.</item>
+            <item>Fixed the legacy "Overall rating" language key and removed the old singular "View all reviews" key usage.</item>
+        </change>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>1.3.0</version>
         <addition>
             <item>Four layout templates: default (carousel), card-carousel, list, and compact (sidebar/footer).</item>
