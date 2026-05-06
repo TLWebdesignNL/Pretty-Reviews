@@ -86,6 +86,22 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>1.3.0</version>
+        <addition>
+            <item>Four layout templates: default (carousel), card-carousel, list, and compact (sidebar/footer).</item>
+            <item>Legacy layout preserved as tmpl/legacy.php for users with existing template overrides.</item>
+            <item>Display settings tab: autoplay toggle, show/hide rating summary, review count, profile photos, review date, "View all reviews" button.</item>
+            <item>Review text truncation: configurable maximum character limit (default 250).</item>
+            <item>Load layout CSS toggle: opt-out of the built-in stylesheet per module instance.</item>
+            <item>CSS grid stacking fix for carousel height jumping between slides of different text lengths.</item>
+            <item>Layout field moved from Advanced tab to Display tab in module settings.</item>
+            <item>Empty-state language string (MOD_PRETTYREVIEWS_NO_REVIEWS) shown when no reviews are available.</item>
+            <item>Accessible star-rating aria-labels via MOD_PRETTYREVIEWS_RATING_ARIA.</item>
+        </addition>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>1.2.0</version>
         <security>
             <item>AJAX refresh endpoint now requires the Joomla CSRF form token (POST) and a per-module core.edit permission check.</item>

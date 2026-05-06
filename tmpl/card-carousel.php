@@ -20,7 +20,7 @@ HTMLHelper::_('bootstrap.carousel', $carouselId);
 
 if ((int) $params->get('load_layout_css', 1) === 1) {
     $app->getDocument()->getWebAssetManager()
-        ->registerAndUseStyle('mod_prettyreviews.default', 'media/mod_prettyreviews/css/layout-default.css');
+        ->registerAndUseStyle('mod_prettyreviews.card-carousel', 'media/mod_prettyreviews/css/layout-card-carousel.css');
 }
 
 $escape  = static fn ($v): string => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
@@ -45,7 +45,7 @@ $reviews           = array_values($reviewdata['reviews'] ?? []);
 $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
 ?>
 
-<div class="prettyreviews prettyreviews-default">
+<div class="prettyreviews prettyreviews-card-carousel">
 
     <?php if ($showRatingSummary || ($showViewAll && $reviewsUrl !== '')) : ?>
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -86,7 +86,7 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
     <?php else : ?>
         <div id="<?php echo $carouselId; ?>"
              class="carousel slide"
-             <?php if (!empty($autoPlay)) : ?>data-bs-ride="carousel"<?php endif; ?>>
+             <?php if ($autoPlay) : ?>data-bs-ride="carousel"<?php endif; ?>>
             <div class="carousel-inner">
                 <?php foreach ($reviews as $slideIdx => $review) :
                     $photoUrl  = $safeUrl($review['profile_photo_url'] ?? '');
@@ -101,14 +101,14 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                     $reviewRating = (int) ($review['rating'] ?? 0);
                     ?>
                     <div class="carousel-item <?php echo ($slideIdx === 0) ? 'active' : ''; ?>">
-                        <article class="card border-0">
-                            <div class="card-body">
+                        <article class="card shadow-sm">
+                            <div class="card-body p-3 p-md-4">
                                 <div class="d-flex align-items-start gap-3">
                                     <?php if ($showPhotos && $photoUrl !== '') : ?>
                                         <img src="<?php echo $photoUrl; ?>"
                                              class="rounded-circle flex-shrink-0"
-                                             width="56"
-                                             height="56"
+                                             width="64"
+                                             height="64"
                                              alt="<?php echo $author; ?>">
                                     <?php endif; ?>
                                     <div class="flex-grow-1">
@@ -123,9 +123,9 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                                                     <span class="h6 mb-0 d-block"><?php echo $author; ?></span>
                                                 <?php endif; ?>
                                                 <?php if ($showDate) : ?>
-                                                <div class="small text-muted">
-                                                    <?php echo $escape(PrettyreviewsHelper::timeAgo($time)); ?>
-                                                </div>
+                                                    <div class="small text-muted">
+                                                        <?php echo $escape(PrettyreviewsHelper::timeAgo($time)); ?>
+                                                    </div>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="text-warning text-nowrap"
@@ -137,7 +137,7 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
                                             </div>
                                         </div>
                                         <?php if ($text !== '') : ?>
-                                            <p class="mb-0 text-muted small"><?php echo $text; ?></p>
+                                            <p class="mb-0 text-muted"><?php echo $text; ?></p>
                                         <?php endif; ?>
                                     </div>
                                 </div>

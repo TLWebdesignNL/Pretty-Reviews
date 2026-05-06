@@ -1,0 +1,45 @@
+.prettyreviews-card-carousel .carousel-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.prettyreviews-card-carousel .carousel-inner .carousel-item {
+    grid-row: 1;
+    grid-column: 1;
+    display: block !important;
+    float: none !important;
+    margin-right: 0 !important;
+    transform: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+}
+
+.prettyreviews-card-carousel .carousel-inner .carousel-item.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.prettyreviews-card-carousel .carousel-inner .carousel-item-next,
+.prettyreviews-card-carousel .carousel-inner .carousel-item-prev {
+    visibility: visible;
+    opacity: 0;
+}
+
+.prettyreviews-card-carousel .carousel-inner .carousel-item-next.carousel-item-start,
+.prettyreviews-card-carousel .carousel-inner .carousel-item-prev.carousel-item-end {
+    opacity: 1;
+    z-index: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.prettyreviews-card-carousel .carousel-inner .active.carousel-item-start,
+.prettyreviews-card-carousel .carousel-inner .active.carousel-item-end {
+    opacity: 0;
+    z-index: 0;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+}

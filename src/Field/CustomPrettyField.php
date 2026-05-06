@@ -71,7 +71,7 @@ class CustomPrettyField extends FormField
             ->listCheck(false);
 
         $wa = $app->getDocument()->getWebAssetManager();
-        $wa->registerAndUseScript('prettyreviews', 'media/mod_prettyreviews/js/prettyreviews.js', [], ['defer' => true]);
+        $wa->registerAndUseScript('mod_prettyreviews.admin', 'media/mod_prettyreviews/js/prettyreviews.js', [], ['defer' => true]);
 
         $endpoint = Uri::base()
             . 'index.php?option=com_modules&view=module&layout=edit&id='

@@ -7,7 +7,7 @@
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -19,7 +19,9 @@
     </files>
     <media folder="media" destination="mod_prettyreviews">
         <filename>logo.svg</filename>
+        <filename>joomla.asset.json</filename>
         <folder>js</folder>
+        <folder>css</folder>
     </media>
     <config>
         <fields name="params">
@@ -105,7 +107,7 @@
                         addfieldprefix="TLWeb\Module\Prettyreviews\Site\Field"
                 />
             </fieldset>
-            <fieldset name="advanced">
+            <fieldset name="display" label="MOD_PRETTYREVIEWS_FIELDSET_DISPLAY_LABEL">
                 <field
                         name="layout"
                         type="modulelayout"
@@ -113,7 +115,89 @@
                         class="form-select"
                         validate="moduleLayout"
                 />
-
+                <field
+                        name="autoplay"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_AUTOPLAY_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_AUTOPLAY_DESC"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_rating_summary"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_RATING_SUMMARY_LABEL"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_review_count"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_REVIEW_COUNT_LABEL"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_photos"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_PHOTOS_LABEL"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_date"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_DATE_LABEL"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_viewall"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_VIEWALL_LABEL"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="review_maxchars"
+                        type="number"
+                        label="MOD_PRETTYREVIEWS_FIELD_REVIEW_MAXCHARS_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_REVIEW_MAXCHARS_DESC"
+                        default="250"
+                        filter="integer"
+                        min="0"
+                />
+                <field
+                        name="load_layout_css"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_LOAD_LAYOUT_CSS_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_LOAD_LAYOUT_CSS_DESC"
+                        default="1"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+            </fieldset>
+            <fieldset name="advanced">
                 <field
                         name="moduleclass_sfx"
                         type="textarea"

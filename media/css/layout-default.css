@@ -1,0 +1,55 @@
+/*
+ * Stack all slides in one grid cell so the carousel height is always
+ * determined by the tallest slide — no jumping on transition.
+ * Bootstrap hides non-active items with display:none, which removes them
+ * from the grid. We override that and use opacity/visibility instead.
+ */
+.prettyreviews-default .carousel-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.prettyreviews-default .carousel-inner .carousel-item {
+    grid-row: 1;
+    grid-column: 1;
+    display: block !important;   /* keep in grid so all slides contribute to container height */
+    float: none !important;      /* cancel Bootstrap float:left */
+    margin-right: 0 !important;  /* cancel Bootstrap margin-right:-100% */
+    transform: none !important;  /* disable slide; replaced by opacity fade below */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+}
+
+/* Active slide */
+.prettyreviews-default .carousel-inner .carousel-item.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Incoming slide (before Bootstrap adds the -start/-end class) */
+.prettyreviews-default .carousel-inner .carousel-item-next,
+.prettyreviews-default .carousel-inner .carousel-item-prev {
+    visibility: visible;
+    opacity: 0;
+}
+
+/* Incoming slide fading in */
+.prettyreviews-default .carousel-inner .carousel-item-next.carousel-item-start,
+.prettyreviews-default .carousel-inner .carousel-item-prev.carousel-item-end {
+    opacity: 1;
+    z-index: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Outgoing slide fading out */
+.prettyreviews-default .carousel-inner .active.carousel-item-start,
+.prettyreviews-default .carousel-inner .active.carousel-item-end {
+    opacity: 0;
+    z-index: 0;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+}
