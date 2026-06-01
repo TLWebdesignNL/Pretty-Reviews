@@ -86,6 +86,17 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>1.4.1</version>
+        <addition>
+            <item>Added French language files.</item>
+        </addition>
+        <change>
+            <item>Adjusted the German relative-date suffix for the current time-ago output format.</item>
+        </change>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>1.4.0</version>
         <change>
             <item>Joomla 6 compliance pass: helper methods are used through instances and review dates are prepared in the dispatcher before layout rendering.</item>
