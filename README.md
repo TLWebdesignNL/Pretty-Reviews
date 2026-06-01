@@ -12,7 +12,7 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 - Display reviews by newest first or random order.
 - Limit the number of displayed reviews.
 - Hide reviews without text.
-- Multilingual language files: English, Dutch, and German.
+- Multilingual language files: English, Dutch, German, and French.
 
 ## Requirements
 
