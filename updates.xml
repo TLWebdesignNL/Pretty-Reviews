@@ -265,6 +265,7 @@
         <tags>
             <tag>stable</tag>
         </tags>
+        <sha256>fbdeae8d7a2860a98a847fa92388ded8ff08704b63cdf9395a3cc79ab52fab95</sha256>
         <maintainer>TLWebdesign</maintainer>
         <maintainerurl>https://www.tlwebdesign.nl/</maintainerurl>
         <section>Updates</section>
