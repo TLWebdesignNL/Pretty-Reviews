@@ -5,6 +5,7 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 ## Features
 
 - Display Google rating, review count, review text, author names, profile photos, star ratings, and a "View all reviews" link.
+- Choose from Bootstrap and UIkit/YOOtheme-compatible layouts.
 - Fetch reviews manually from the Joomla module edit screen.
 - Optional scheduled refreshes through the companion task plugin.
 - Keep Google API credentials server-side; the browser only sends the module ID and Joomla CSRF token.
