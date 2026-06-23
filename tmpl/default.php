@@ -17,7 +17,7 @@ $app->getDocument()->getWebAssetManager()
 
 if ((int) $params->get('load_layout_css', 1) === 1) {
     $app->getDocument()->getWebAssetManager()
-        ->registerAndUseStyle('mod_prettyreviews.default', 'media/mod_prettyreviews/css/layout-default.css');
+        ->registerAndUseStyle('mod_prettyreviews.carousel', 'media/mod_prettyreviews/css/carousel.css');
 }
 
 $escape  = static fn ($v): string => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
@@ -90,11 +90,10 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
         </p>
     <?php else : ?>
         <div data-prettyreviews-carousel-wrapper>
-        <div class="prettyreviews-track"
+        <div class="prettyreviews-track pr-cols-<?php echo (int) $carouselColumns['mobile']; ?> pr-cols-md-<?php echo (int) $carouselColumns['tablet']; ?> pr-cols-lg-<?php echo (int) $carouselColumns['desktop']; ?> pr-cols-xl-<?php echo (int) $carouselColumns['wide']; ?>"
              data-prettyreviews-track
              data-autoplay="<?php echo $autoPlay ? '1' : '0'; ?>"
              data-autoplay-interval="<?php echo (int) $autoplayInterval * 1000; ?>"
-             style="--pr-cols-config: <?php echo $carouselColumns; ?>;"
              role="region"
              aria-roledescription="carousel"
              aria-label="<?php echo $escape(Text::_('MOD_PRETTYREVIEWS_REVIEWS')); ?>"

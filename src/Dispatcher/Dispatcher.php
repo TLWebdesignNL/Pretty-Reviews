@@ -64,10 +64,14 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
             unset($review);
         }
 
-        $carouselColumns = (int) ($params['carousel_columns'] ?? 1);
-        $carouselColumns = min(6, max(1, $carouselColumns));
+        $clampColumns = static fn ($value, int $default): int => min(6, max(1, (int) ($value ?? $default)));
 
-        $data['carouselColumns'] = $carouselColumns;
+        $data['carouselColumns'] = [
+            'mobile'  => $clampColumns($params['carousel_columns_mobile'] ?? null, 1),
+            'tablet'  => $clampColumns($params['carousel_columns_tablet'] ?? null, 2),
+            'desktop' => $clampColumns($params['carousel_columns_desktop'] ?? null, 4),
+            'wide'    => $clampColumns($params['carousel_columns_wide'] ?? null, 6),
+        ];
 
         $autoplayInterval = (int) ($params['autoplay_interval'] ?? 5);
         $autoplayInterval = min(60, max(1, $autoplayInterval));

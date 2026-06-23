@@ -38,8 +38,17 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
 $sliderOptions     = 'finite: false';
 
 if ($autoPlay) {
-    $sliderOptions .= '; autoplay: true; autoplay-interval: 5000; pause-on-hover: true';
+    $sliderOptions .= '; autoplay: true; autoplay-interval: ' . ((int) $autoplayInterval * 1000) . '; pause-on-hover: true';
 }
+
+// UIkit native responsive grid (its own breakpoints: @s 640, @m 960, @l 1200).
+$columnClasses = sprintf(
+    'uk-child-width-1-%d uk-child-width-1-%d@s uk-child-width-1-%d@m uk-child-width-1-%d@l',
+    (int) $carouselColumns['mobile'],
+    (int) $carouselColumns['tablet'],
+    (int) $carouselColumns['desktop'],
+    (int) $carouselColumns['wide']
+);
 ?>
 
 <div id="<?php echo $sliderId; ?>" class="prettyreviews prettyreviews-uikit">
@@ -93,7 +102,7 @@ if ($autoPlay) {
         <div uk-slider="<?php echo $escape($sliderOptions); ?>">
             <div class="uk-position-relative">
                 <div class="uk-slider-container">
-                    <ul class="uk-slider-items uk-child-width-1-1">
+                    <ul class="uk-slider-items <?php echo $columnClasses; ?>">
                         <?php foreach ($reviews as $review) :
                             $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
                             $authorUrl    = $safeUrl($review['author_url'] ?? '');

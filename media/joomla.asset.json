@@ -14,9 +14,9 @@
             }
         },
         {
-            "name": "mod_prettyreviews.default",
+            "name": "mod_prettyreviews.carousel",
             "type": "style",
-            "uri": "mod_prettyreviews/layout-default.css"
+            "uri": "mod_prettyreviews/css/carousel.css"
         },
         {
             "name": "mod_prettyreviews.responsive-carousel",

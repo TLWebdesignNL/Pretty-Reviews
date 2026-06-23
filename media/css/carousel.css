@@ -1,0 +1,72 @@
+/*
+ * Pretty Reviews scroll-snap carousel — shared by the default, compact and
+ * card-carousel layouts.
+ *
+ * Column count is driven by CSP-safe utility classes (no inline styles): the
+ * template adds pr-cols-{n} / pr-cols-md-{n} / pr-cols-lg-{n} / pr-cols-xl-{n},
+ * mobile-first like Bootstrap's row-cols-*. The track is a native
+ * horizontally-scrollable, snap-aligned flex row — no JS regrouping.
+ */
+.prettyreviews-track {
+    --pr-cols: 1;
+    --pr-gap: 1rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--pr-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;        /* Firefox */
+}
+
+.prettyreviews-track::-webkit-scrollbar {
+    display: none;                /* Chrome/Safari */
+}
+
+.prettyreviews-slide {
+    flex: 0 0 calc((100% - (var(--pr-cols) - 1) * var(--pr-gap)) / var(--pr-cols));
+    min-width: 0;
+    scroll-snap-align: start;
+}
+
+/* Column-count utilities — mobile-first; larger breakpoints override smaller. */
+.pr-cols-1 { --pr-cols: 1; }
+.pr-cols-2 { --pr-cols: 2; }
+.pr-cols-3 { --pr-cols: 3; }
+.pr-cols-4 { --pr-cols: 4; }
+.pr-cols-5 { --pr-cols: 5; }
+.pr-cols-6 { --pr-cols: 6; }
+
+@media (min-width: 768px) {
+    .pr-cols-md-1 { --pr-cols: 1; }
+    .pr-cols-md-2 { --pr-cols: 2; }
+    .pr-cols-md-3 { --pr-cols: 3; }
+    .pr-cols-md-4 { --pr-cols: 4; }
+    .pr-cols-md-5 { --pr-cols: 5; }
+    .pr-cols-md-6 { --pr-cols: 6; }
+}
+
+@media (min-width: 992px) {
+    .pr-cols-lg-1 { --pr-cols: 1; }
+    .pr-cols-lg-2 { --pr-cols: 2; }
+    .pr-cols-lg-3 { --pr-cols: 3; }
+    .pr-cols-lg-4 { --pr-cols: 4; }
+    .pr-cols-lg-5 { --pr-cols: 5; }
+    .pr-cols-lg-6 { --pr-cols: 6; }
+}
+
+@media (min-width: 1200px) {
+    .pr-cols-xl-1 { --pr-cols: 1; }
+    .pr-cols-xl-2 { --pr-cols: 2; }
+    .pr-cols-xl-3 { --pr-cols: 3; }
+    .pr-cols-xl-4 { --pr-cols: 4; }
+    .pr-cols-xl-5 { --pr-cols: 5; }
+    .pr-cols-xl-6 { --pr-cols: 6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .prettyreviews-track {
+        scroll-behavior: auto;
+    }
+}
