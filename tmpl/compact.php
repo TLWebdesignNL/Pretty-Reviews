@@ -34,9 +34,22 @@ $showPhotos        = (bool) $params->get('show_photos', 1);
 $showDate          = (bool) $params->get('show_date', 1);
 $showViewAll       = (bool) $params->get('show_viewall', 1);
 $showWriteReview   = (bool) $params->get('show_write_review', 0);
+$carouselColumns   = (int) $params->get('carousel_columns', 1);
+$carouselColumns   = in_array($carouselColumns, [1, 2, 3, 4], true) ? $carouselColumns : 1;
 $rating            = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount      = (int) ($reviewdata['ratingsCount'] ?? 0);
 $reviews           = array_values($reviewdata['reviews'] ?? []);
+$reviewSlides      = array_chunk($reviews, $carouselColumns);
+$columnClasses     = 'row row-cols-1 g-3';
+
+if ($carouselColumns > 1) {
+    $columnClasses .= ' row-cols-md-2';
+}
+
+if ($carouselColumns > 2) {
+    $columnClasses .= ' row-cols-lg-' . $carouselColumns;
+}
+
 $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
 $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
 ?>
@@ -93,61 +106,67 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
              class="carousel slide"
              <?php if ($autoPlay) : ?>data-bs-ride="carousel"<?php endif; ?>>
             <div class="carousel-inner">
-                <?php foreach ($reviews as $slideIdx => $review) :
-                    $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
-                    $authorUrl    = $safeUrl($review['author_url'] ?? '');
-                    $author       = $escape($review['author_name'] ?? '');
-                    $rawText      = (string) ($review['text'] ?? '');
-                    if ($maxChars > 0 && mb_strlen($rawText) > $maxChars) {
-                        $rawText = mb_substr($rawText, 0, $maxChars) . '…';
-                    }
-                    $text         = $escape($rawText);
-                    $timeAgo      = $escape($review['time_ago'] ?? '');
-                    $reviewRating = (int) ($review['rating'] ?? 0);
-                    ?>
+                <?php foreach ($reviewSlides as $slideIdx => $slideReviews) : ?>
                     <div class="carousel-item <?php echo ($slideIdx === 0) ? 'active' : ''; ?>">
-                        <div class="d-flex align-items-start gap-2">
-                            <?php if ($showPhotos && $photoUrl !== '') : ?>
-                                <img src="<?php echo $photoUrl; ?>"
-                                     class="rounded-circle flex-shrink-0"
-                                     width="40"
-                                     height="40"
-                                     alt="<?php echo $author; ?>">
-                            <?php endif; ?>
-                            <div class="flex-grow-1 overflow-hidden">
-                                <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                                    <?php if ($authorUrl !== '') : ?>
-                                        <a href="<?php echo $authorUrl; ?>"
-                                           class="fw-semibold small text-body text-decoration-none text-truncate">
-                                            <?php echo $author; ?>
-                                        </a>
-                                    <?php else : ?>
-                                        <span class="fw-semibold small text-truncate"><?php echo $author; ?></span>
-                                    <?php endif; ?>
-                                    <div class="text-warning text-nowrap small"
-                                         aria-label="<?php echo $escape(Text::sprintf('MOD_PRETTYREVIEWS_RATING_ARIA', $reviewRating)); ?>">
-                                        <?php for ($j = 1; $j <= 5; $j++) : ?>
-                                            <i class="<?php echo ($j <= $reviewRating) ? 'fas' : 'far'; ?> fa-star"
-                                               aria-hidden="true"></i>
-                                        <?php endfor; ?>
+                        <div class="<?php echo $columnClasses; ?>">
+                            <?php foreach ($slideReviews as $review) :
+                                $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
+                                $authorUrl    = $safeUrl($review['author_url'] ?? '');
+                                $author       = $escape($review['author_name'] ?? '');
+                                $rawText      = (string) ($review['text'] ?? '');
+                                if ($maxChars > 0 && mb_strlen($rawText) > $maxChars) {
+                                    $rawText = mb_substr($rawText, 0, $maxChars) . '…';
+                                }
+                                $text         = $escape($rawText);
+                                $timeAgo      = $escape($review['time_ago'] ?? '');
+                                $reviewRating = (int) ($review['rating'] ?? 0);
+                                ?>
+                                <div class="col">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <?php if ($showPhotos && $photoUrl !== '') : ?>
+                                            <img src="<?php echo $photoUrl; ?>"
+                                                 class="rounded-circle flex-shrink-0"
+                                                 width="40"
+                                                 height="40"
+                                                 alt="<?php echo $author; ?>">
+                                        <?php endif; ?>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="d-flex flex-column justify-content-between gap-1 mb-1">
+                                                <?php if ($authorUrl !== '') : ?>
+                                                    <a href="<?php echo $authorUrl; ?>"
+                                                       class="fw-semibold small text-body text-decoration-none text-truncate">
+                                                        <?php echo $author; ?>
+                                                    </a>
+                                                <?php else : ?>
+                                                    <span class="fw-semibold small text-truncate"><?php echo $author; ?></span>
+                                                <?php endif; ?>
+                                                <div class="text-warning text-nowrap small"
+                                                     aria-label="<?php echo $escape(Text::sprintf('MOD_PRETTYREVIEWS_RATING_ARIA', $reviewRating)); ?>">
+                                                    <?php for ($j = 1; $j <= 5; $j++) : ?>
+                                                        <i class="<?php echo ($j <= $reviewRating) ? 'fas' : 'far'; ?> fa-star"
+                                                           aria-hidden="true"></i>
+                                                    <?php endfor; ?>
+                                                </div>
+                                            </div>
+                                            <?php if ($text !== '') : ?>
+                                                <p class="small text-muted mb-1"><?php echo $text; ?></p>
+                                            <?php endif; ?>
+                                            <?php if ($showDate && $timeAgo !== '') : ?>
+                                                <div class="small text-muted">
+                                                    <?php echo $timeAgo; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
-                                <?php if ($text !== '') : ?>
-                                    <p class="small text-muted mb-1"><?php echo $text; ?></p>
-                                <?php endif; ?>
-                                <?php if ($showDate && $timeAgo !== '') : ?>
-                                    <div class="small text-muted">
-                                        <?php echo $timeAgo; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
         </div>
 
-        <?php if (count($reviews) > 1) : ?>
+        <?php if (count($reviewSlides) > 1) : ?>
             <div class="d-flex justify-content-between mt-2">
                 <button class="btn btn-link btn-sm p-0 text-muted"
                         type="button"
