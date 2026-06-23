@@ -12,6 +12,7 @@
         <change>
             <item>The Bootstrap carousel has been rebuilt on native CSS scroll-snap. Touch swipe is native, the previous/next buttons advance one column at a time, and the carousel stays usable as a scrollable row when JavaScript is unavailable. Column counts are applied with CSP-safe utility classes (no inline styles).</item>
             <item>The UIkit layouts keep their native uk-slider but now honour the per-breakpoint column and autoplay-interval settings (using UIkit's own breakpoints).</item>
+            <item>Upgrade-safe defaults: existing modules stay at a single column on every breakpoint after updating, so the layout does not change until you opt in. Newly created modules default to 1 / 2 / 4 / 4 columns (mobile / tablet / desktop / wide).</item>
         </change>
         <note>
             <item>Breaking change: the Bootstrap carousel markup and CSS classes have changed (the old .carousel / .carousel-item structure is replaced by .prettyreviews-track / .prettyreviews-slide with pr-cols-* column utilities). Re-copy any template overrides of the Default, Card Carousel, or Compact layouts, and update custom CSS that targeted the old classes.</item>

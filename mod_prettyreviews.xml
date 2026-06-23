@@ -286,7 +286,7 @@
                         type="list"
                         label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_LABEL"
                         description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_DESC"
-                        default="6"
+                        default="4"
                         filter="integer"
                         validate="options"
                 >

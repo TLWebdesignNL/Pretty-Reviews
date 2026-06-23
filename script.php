@@ -11,9 +11,12 @@
 // No direct access to this file
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Installer\InstallerAdapter;
+use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 
 /**
  * Script file of Prettyreviews module
@@ -29,6 +32,13 @@ class mod_prettyreviewsInstallerScript
      * @var string
      */
     protected string $minimumPhp;
+
+    /**
+     * The version being upgraded from, captured during an update preflight.
+     *
+     * @var ?string
+     */
+    protected ?string $fromVersion = null;
 
     /**
      * Extension script constructor.
@@ -106,6 +116,12 @@ class mod_prettyreviewsInstallerScript
             return false;
         }
 
+        // Capture the version we are upgrading from. At preflight the extensions
+        // table still holds the OLD manifest, so this is the pre-update version.
+        if ($type === 'update') {
+            $this->fromVersion = $this->getInstalledVersion();
+        }
+
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_PREFLIGHT');
 
         return true;
@@ -123,9 +139,111 @@ class mod_prettyreviewsInstallerScript
     {
         if ($type == "update") {
             echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_RESAVE_MODULE');
+
+            // Upgrading from a pre-2.0.0 single-carousel release: pin every existing
+            // module instance to one column on all breakpoints so its appearance does
+            // not change. New 2.0+ modules store their own column settings and are
+            // therefore left untouched.
+            if ($this->fromVersion !== null && version_compare($this->fromVersion, '2.0.0', '<')) {
+                $this->lockLegacyColumnsToSingle();
+                echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_PRESERVED');
+            }
         }
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_POSTFLIGHT');
 
         return true;
+    }
+
+    /**
+     * Reads the currently-installed version from the extensions table. During an
+     * update preflight this still reflects the version being replaced.
+     *
+     * @return  ?string
+     */
+    private function getInstalledVersion(): ?string
+    {
+        try {
+            $db    = Factory::getContainer()->get(DatabaseInterface::class);
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('manifest_cache'))
+                ->from($db->quoteName('#__extensions'))
+                ->where($db->quoteName('type') . ' = ' . $db->quote('module'))
+                ->where($db->quoteName('element') . ' = ' . $db->quote('mod_prettyreviews'));
+            $db->setQuery($query);
+            $cache = $db->loadResult();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (!$cache) {
+            return null;
+        }
+
+        $decoded = json_decode((string) $cache, true);
+
+        return \is_array($decoded) && isset($decoded['version']) ? (string) $decoded['version'] : null;
+    }
+
+    /**
+     * Pins every existing module instance to a single column on all breakpoints,
+     * preserving pre-2.0.0 behaviour. Only adds the keys when they are absent, so
+     * an administrator's saved choices are never overwritten.
+     *
+     * @return  void
+     */
+    private function lockLegacyColumnsToSingle(): void
+    {
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+
+        $query = $db->getQuery(true)
+            ->select([$db->quoteName('id'), $db->quoteName('params')])
+            ->from($db->quoteName('#__modules'))
+            ->where($db->quoteName('module') . ' = ' . $db->quote('mod_prettyreviews'));
+        $db->setQuery($query);
+        $modules = $db->loadObjectList();
+
+        if (empty($modules)) {
+            return;
+        }
+
+        $keys = [
+            'carousel_columns_mobile',
+            'carousel_columns_tablet',
+            'carousel_columns_desktop',
+            'carousel_columns_wide',
+        ];
+
+        foreach ($modules as $module) {
+            $params = json_decode((string) $module->params, true);
+
+            if (!\is_array($params)) {
+                $params = [];
+            }
+
+            $changed = false;
+
+            foreach ($keys as $key) {
+                if (!\array_key_exists($key, $params)) {
+                    $params[$key] = "1";
+                    $changed      = true;
+                }
+            }
+
+            if (!$changed) {
+                continue;
+            }
+
+            $encoded = json_encode($params);
+            $id      = (int) $module->id;
+
+            $update = $db->getQuery(true)
+                ->update($db->quoteName('#__modules'))
+                ->set($db->quoteName('params') . ' = :params')
+                ->where($db->quoteName('id') . ' = :id')
+                ->bind(':params', $encoded)
+                ->bind(':id', $id, ParameterType::INTEGER);
+            $db->setQuery($update);
+            $db->execute();
+        }
     }
 }

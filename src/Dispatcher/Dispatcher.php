@@ -64,13 +64,16 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
             unset($review);
         }
 
+        // Pre-2.0 installs are pinned to a single column by the update script
+        // (see lockLegacyColumnsToSingle in script.php), so here we simply apply
+        // the per-breakpoint settings with their default values.
         $clampColumns = static fn ($value, int $default): int => min(6, max(1, (int) ($value ?? $default)));
 
         $data['carouselColumns'] = [
             'mobile'  => $clampColumns($params['carousel_columns_mobile'] ?? null, 1),
             'tablet'  => $clampColumns($params['carousel_columns_tablet'] ?? null, 2),
             'desktop' => $clampColumns($params['carousel_columns_desktop'] ?? null, 4),
-            'wide'    => $clampColumns($params['carousel_columns_wide'] ?? null, 6),
+            'wide'    => $clampColumns($params['carousel_columns_wide'] ?? null, 4),
         ];
 
         $autoplayInterval = (int) ($params['autoplay_interval'] ?? 5);
