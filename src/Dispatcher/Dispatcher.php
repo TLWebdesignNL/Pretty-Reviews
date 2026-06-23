@@ -66,10 +66,8 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
 
         $carouselColumns = (int) ($params['carousel_columns'] ?? 1);
         $carouselColumns = in_array($carouselColumns, [1, 2, 3, 4], true) ? $carouselColumns : 1;
-        $reviews         = array_values($data['reviewdata']['reviews'] ?? []);
 
         $data['carouselColumns'] = $carouselColumns;
-        $data['reviewSlides']    = $helper->buildReviewSlides($reviews, $carouselColumns);
 
         return $data;
     }

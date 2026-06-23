@@ -1,55 +1,48 @@
 /*
- * Stack all slides in one grid cell so the carousel height is always
- * determined by the tallest slide — no jumping on transition.
- * Bootstrap hides non-active items with display:none, which removes them
- * from the grid. We override that and use opacity/visibility instead.
+ * Scroll-snap carousel track (shared by the default and compact layouts).
+ * Column count is driven purely by CSS:
+ *   --pr-cols-config is set inline by the template (1-4); the media queries
+ *   clamp it per breakpoint. No JS regrouping — the track is a native
+ *   horizontally-scrollable, snap-aligned flex row.
  */
-.prettyreviews-default .carousel-inner {
-    display: grid;
-    grid-template-columns: 1fr;
+.prettyreviews-track {
+    --pr-cols-config: 1;          /* overridden inline by the template */
+    --pr-cols: 1;
+    --pr-gap: 1rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--pr-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;        /* Firefox */
 }
 
-.prettyreviews-default .carousel-inner .carousel-item {
-    grid-row: 1;
-    grid-column: 1;
-    display: block !important;   /* keep in grid so all slides contribute to container height */
-    float: none !important;      /* cancel Bootstrap float:left */
-    margin-right: 0 !important;  /* cancel Bootstrap margin-right:-100% */
-    transform: none !important;  /* disable slide; replaced by opacity fade below */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+.prettyreviews-track::-webkit-scrollbar {
+    display: none;                /* Chrome/Safari */
 }
 
-/* Active slide */
-.prettyreviews-default .carousel-inner .carousel-item.active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    z-index: 1;
-    transition: opacity 0.5s ease-in-out;
+@media (min-width: 768px) {
+    .prettyreviews-track {
+        --pr-cols: min(2, var(--pr-cols-config));
+    }
 }
 
-/* Incoming slide (before Bootstrap adds the -start/-end class) */
-.prettyreviews-default .carousel-inner .carousel-item-next,
-.prettyreviews-default .carousel-inner .carousel-item-prev {
-    visibility: visible;
-    opacity: 0;
+@media (min-width: 992px) {
+    .prettyreviews-track {
+        --pr-cols: var(--pr-cols-config);
+    }
 }
 
-/* Incoming slide fading in */
-.prettyreviews-default .carousel-inner .carousel-item-next.carousel-item-start,
-.prettyreviews-default .carousel-inner .carousel-item-prev.carousel-item-end {
-    opacity: 1;
-    z-index: 1;
-    transition: opacity 0.5s ease-in-out;
+.prettyreviews-slide {
+    flex: 0 0 calc((100% - (var(--pr-cols) - 1) * var(--pr-gap)) / var(--pr-cols));
+    min-width: 0;
+    scroll-snap-align: start;
 }
 
-/* Outgoing slide fading out */
-.prettyreviews-default .carousel-inner .active.carousel-item-start,
-.prettyreviews-default .carousel-inner .active.carousel-item-end {
-    opacity: 0;
-    z-index: 0;
-    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+@media (prefers-reduced-motion: reduce) {
+    .prettyreviews-track {
+        scroll-behavior: auto;
+    }
 }

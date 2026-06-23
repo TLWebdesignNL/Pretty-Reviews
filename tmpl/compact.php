@@ -10,12 +10,14 @@
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 
-$carouselId = 'prettyReviewsCarousel' . (int) $module->id;
+$app->getDocument()->getWebAssetManager()->useScript('mod_prettyreviews.responsive-carousel');
 
-HTMLHelper::_('bootstrap.carousel', $carouselId);
+if ((int) $params->get('load_layout_css', 1) === 1) {
+    $app->getDocument()->getWebAssetManager()
+        ->registerAndUseStyle('mod_prettyreviews.default', 'media/mod_prettyreviews/css/layout-default.css');
+}
 
 $escape  = static fn ($v): string => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
 $safeUrl = static function ($url) use ($escape): string {
@@ -37,16 +39,6 @@ $showWriteReview   = (bool) $params->get('show_write_review', 0);
 $rating            = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount      = (int) ($reviewdata['ratingsCount'] ?? 0);
 $reviews           = array_values($reviewdata['reviews'] ?? []);
-$columnClasses     = 'row row-cols-1 g-3';
-
-if ($carouselColumns > 1) {
-    $columnClasses .= ' row-cols-md-2';
-}
-
-if ($carouselColumns > 2) {
-    $columnClasses .= ' row-cols-lg-' . $carouselColumns;
-}
-
 $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
 $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
 ?>
@@ -99,29 +91,28 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
             <?php echo Text::_('MOD_PRETTYREVIEWS_NO_REVIEWS'); ?>
         </p>
     <?php else : ?>
-        <div id="<?php echo $carouselId; ?>"
-             class="carousel slide"
-             <?php if ($autoPlay) : ?>data-bs-ride="carousel"<?php endif; ?>>
-            <div class="carousel-inner">
-                <?php foreach ($reviewSlides as $slideIdx => $slideReviews) : ?>
-                    <div class="carousel-item <?php echo ($slideIdx === 0) ? 'active' : ''; ?>">
-                        <div class="<?php echo $columnClasses; ?>">
-                            <?php foreach ($slideReviews as $reviewIdx => $review) :
-                                $responsiveClass = $reviewIdx === 1
-                                    ? ' d-none d-md-block'
-                                    : ($reviewIdx > 1 ? ' d-none d-lg-block' : '');
-                                $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
-                                $authorUrl    = $safeUrl($review['author_url'] ?? '');
-                                $author       = $escape($review['author_name'] ?? '');
-                                $rawText      = (string) ($review['text'] ?? '');
-                                if ($maxChars > 0 && mb_strlen($rawText) > $maxChars) {
-                                    $rawText = mb_substr($rawText, 0, $maxChars) . '…';
-                                }
-                                $text         = $escape($rawText);
-                                $timeAgo      = $escape($review['time_ago'] ?? '');
-                                $reviewRating = (int) ($review['rating'] ?? 0);
-                                ?>
-                                <div class="col<?php echo $responsiveClass; ?>">
+        <div data-prettyreviews-carousel-wrapper>
+        <div class="prettyreviews-track"
+             data-prettyreviews-track
+             data-autoplay="<?php echo $autoPlay ? '1' : '0'; ?>"
+             style="--pr-cols-config: <?php echo $carouselColumns; ?>;"
+             role="region"
+             aria-roledescription="carousel"
+             aria-label="<?php echo $escape(Text::_('MOD_PRETTYREVIEWS_REVIEWS')); ?>"
+             tabindex="0">
+                <?php foreach ($reviews as $review) :
+                    $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
+                    $authorUrl    = $safeUrl($review['author_url'] ?? '');
+                    $author       = $escape($review['author_name'] ?? '');
+                    $rawText      = (string) ($review['text'] ?? '');
+                    if ($maxChars > 0 && mb_strlen($rawText) > $maxChars) {
+                        $rawText = mb_substr($rawText, 0, $maxChars) . '…';
+                    }
+                    $text         = $escape($rawText);
+                    $timeAgo      = $escape($review['time_ago'] ?? '');
+                    $reviewRating = (int) ($review['rating'] ?? 0);
+                    ?>
+                    <div class="prettyreviews-slide" data-prettyreviews-review>
                                     <div class="d-flex align-items-start gap-2">
                                         <?php if ($showPhotos && $photoUrl !== '') : ?>
                                             <img src="<?php echo $photoUrl; ?>"
@@ -159,31 +150,26 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
                                         </div>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
                     </div>
                 <?php endforeach; ?>
-            </div>
         </div>
 
-        <?php if (count($reviewSlides) > 1) : ?>
-            <div class="d-flex justify-content-between mt-2">
+            <div class="d-flex justify-content-between mt-2 d-none"
+                 data-prettyreviews-carousel-controls>
                 <button class="btn btn-link btn-sm p-0 text-muted"
                         type="button"
-                        data-bs-target="#<?php echo $carouselId; ?>"
-                        data-bs-slide="prev">
+                        data-prettyreviews-prev>
                     <i class="fas fa-chevron-left" aria-hidden="true"></i>
                     <span class="visually-hidden"><?php echo Text::_('JPREVIOUS'); ?></span>
                 </button>
                 <button class="btn btn-link btn-sm p-0 text-muted"
                         type="button"
-                        data-bs-target="#<?php echo $carouselId; ?>"
-                        data-bs-slide="next">
+                        data-prettyreviews-next>
                     <i class="fas fa-chevron-right" aria-hidden="true"></i>
                     <span class="visually-hidden"><?php echo Text::_('JNEXT'); ?></span>
                 </button>
             </div>
-        <?php endif; ?>
+        </div>
     <?php endif; ?>
 
 </div>

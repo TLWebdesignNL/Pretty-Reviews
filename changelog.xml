@@ -2,13 +2,18 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
-        <version>1.7.0</version>
+        <version>2.0.0</version>
         <addition>
             <item>Optional "Leave a review" button with an automatically generated Place ID link and an administrator-provided URL override.</item>
             <item>Configurable one-to-four-column slides for the Default, Card Carousel, and Compact layouts.</item>
-            <item>Multi-column carousels advance by one review at a time while retaining continuous looping.</item>
             <item>Italian translation.</item>
         </addition>
+        <change>
+            <item>The carousel has been rebuilt on native CSS scroll-snap instead of the Bootstrap carousel. Responsive column counts are now driven entirely by CSS, touch swipe is native, the previous/next buttons advance one column at a time, and the carousel remains usable as a scrollable row when JavaScript is unavailable.</item>
+        </change>
+        <note>
+            <item>Breaking change: the carousel markup and CSS classes have changed (the Bootstrap .carousel / .carousel-item / .prettyreviews-columns-* structure is replaced by .prettyreviews-track / .prettyreviews-slide). Re-copy any template overrides of the Default, Card Carousel, or Compact layouts, and update custom CSS that targeted the old classes.</item>
+        </note>
     </changelog>
     <changelog>
         <element>mod_prettyreviews</element>

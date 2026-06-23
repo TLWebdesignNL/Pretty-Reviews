@@ -1,7 +1,7 @@
 {
     "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
     "name": "mod_prettyreviews",
-    "version": "1.7.0",
+    "version": "2.0.0",
     "description": "Pretty Reviews module assets",
     "license": "GPL-2.0-or-later",
     "assets": [
@@ -17,6 +17,15 @@
             "name": "mod_prettyreviews.default",
             "type": "style",
             "uri": "mod_prettyreviews/layout-default.css"
+        },
+        {
+            "name": "mod_prettyreviews.responsive-carousel",
+            "type": "script",
+            "uri": "mod_prettyreviews/responsive-carousel.js",
+            "dependencies": ["core"],
+            "attributes": {
+                "defer": true
+            }
         }
     ]
 }

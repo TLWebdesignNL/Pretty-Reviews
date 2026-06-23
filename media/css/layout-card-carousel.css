@@ -1,69 +1,47 @@
-.prettyreviews-card-carousel .carousel-inner {
-    display: grid;
-    grid-template-columns: 1fr;
+/*
+ * Scroll-snap carousel track. Column count is driven purely by CSS:
+ *   --pr-cols-config is set inline by the template (1-4); the media queries
+ *   clamp it per breakpoint. No JS regrouping — the track is a native
+ *   horizontally-scrollable, snap-aligned flex row.
+ */
+.prettyreviews-track {
+    --pr-cols-config: 1;          /* overridden inline by the template */
+    --pr-cols: 1;
+    --pr-gap: 1rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--pr-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;        /* Firefox */
 }
 
-.prettyreviews-card-carousel .prettyreviews-card-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+.prettyreviews-track::-webkit-scrollbar {
+    display: none;                /* Chrome/Safari */
 }
 
 @media (min-width: 768px) {
-    .prettyreviews-card-carousel .prettyreviews-columns-2,
-    .prettyreviews-card-carousel .prettyreviews-columns-3,
-    .prettyreviews-card-carousel .prettyreviews-columns-4 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .prettyreviews-track {
+        --pr-cols: min(2, var(--pr-cols-config));
     }
 }
 
 @media (min-width: 992px) {
-    .prettyreviews-card-carousel .prettyreviews-columns-3 {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .prettyreviews-card-carousel .prettyreviews-columns-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+    .prettyreviews-track {
+        --pr-cols: var(--pr-cols-config);
     }
 }
 
-.prettyreviews-card-carousel .carousel-inner .carousel-item {
-    grid-row: 1;
-    grid-column: 1;
-    display: block !important;
-    float: none !important;
-    margin-right: 0 !important;
-    transform: none !important;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+.prettyreviews-slide {
+    flex: 0 0 calc((100% - (var(--pr-cols) - 1) * var(--pr-gap)) / var(--pr-cols));
+    min-width: 0;
+    scroll-snap-align: start;
 }
 
-.prettyreviews-card-carousel .carousel-inner .carousel-item.active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    z-index: 1;
-    transition: opacity 0.5s ease-in-out;
-}
-
-.prettyreviews-card-carousel .carousel-inner .carousel-item-next,
-.prettyreviews-card-carousel .carousel-inner .carousel-item-prev {
-    visibility: visible;
-    opacity: 0;
-}
-
-.prettyreviews-card-carousel .carousel-inner .carousel-item-next.carousel-item-start,
-.prettyreviews-card-carousel .carousel-inner .carousel-item-prev.carousel-item-end {
-    opacity: 1;
-    z-index: 1;
-    transition: opacity 0.5s ease-in-out;
-}
-
-.prettyreviews-card-carousel .carousel-inner .active.carousel-item-start,
-.prettyreviews-card-carousel .carousel-inner .active.carousel-item-end {
-    opacity: 0;
-    z-index: 0;
-    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+@media (prefers-reduced-motion: reduce) {
+    .prettyreviews-track {
+        scroll-behavior: auto;
+    }
 }

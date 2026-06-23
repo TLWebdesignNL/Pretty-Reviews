@@ -447,47 +447,6 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Build circular carousel windows that advance by one review per slide.
-     *
-     * @param   array  $reviews  Reviews in display order.
-     * @param   int    $columns  Number of reviews visible in each slide.
-     *
-     * @return  array
-     *
-     * @since   1.7.0
-     */
-    public function buildReviewSlides(array $reviews, int $columns): array
-    {
-        $reviews = array_values($reviews);
-        $count   = count($reviews);
-
-        if ($count === 0) {
-            return [];
-        }
-
-        $columns = max(1, min(4, $columns));
-        $visible = min($columns, $count);
-
-        if ($count === 1) {
-            return [$reviews];
-        }
-
-        $slides = [];
-
-        for ($start = 0; $start < $count; $start++) {
-            $slide = [];
-
-            for ($offset = 0; $offset < $visible; $offset++) {
-                $slide[] = $reviews[($start + $offset) % $count];
-            }
-
-            $slides[] = $slide;
-        }
-
-        return $slides;
-    }
-
-    /**
      * Convert a timestamp to a human-readable "time ago" format.
      *
      * @param   int  $timestamp  The timestamp to convert.
