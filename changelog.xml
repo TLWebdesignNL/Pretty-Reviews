@@ -2,6 +2,18 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>1.6.0</version>
+        <addition>
+            <item>Review language setting: choose which language Google returns review text in, or leave it on "Use site default" to follow the website language.</item>
+            <item>Purge Reviews button: remove all stored reviews for a module from its admin settings (CSRF- and permission-protected, with a confirmation prompt).</item>
+        </addition>
+        <fix>
+            <item>Reviews are no longer always fetched in Dutch — the hardcoded language has been replaced by the new setting.</item>
+        </fix>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>1.0.0</version>
         <addition>
             <item>First release of Pretty Reviews.</item>

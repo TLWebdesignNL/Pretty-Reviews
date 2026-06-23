@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_PRETTYREVIEWS</name>
-    <creationDate>2026-02-02</creationDate>
+    <creationDate>2026-06-23</creationDate>
     <author>Tom van der Laan</author>
     <authorEmail>info@tlwebdesign.nl</authorEmail>
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.5.0</version>
+    <version>1.6.0</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -70,6 +70,31 @@
                 >
                     <option value="most_relevant">MOD_PRETTYREVIEWS_MOSTRELEVANT</option>
                     <option value="newest">MOD_PRETTYREVIEWS_NEWEST</option>
+                </field>
+                <field
+                        name="reviewlanguage"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_REVIEWLANGUAGE_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_REVIEWLANGUAGE_DESC"
+                        default=""
+                >
+                    <option value="">MOD_PRETTYREVIEWS_REVIEWLANGUAGE_AUTO</option>
+                    <option value="en">English</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                    <option value="it">Italiano</option>
+                    <option value="pt">Português</option>
+                    <option value="pl">Polski</option>
+                    <option value="ru">Русский</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="sv">Svenska</option>
+                    <option value="da">Dansk</option>
+                    <option value="nb">Norsk</option>
+                    <option value="cs">Čeština</option>
+                    <option value="el">Ελληνικά</option>
+                    <option value="ar">العربية</option>
                 </field>
                 <field
                         name="limit"

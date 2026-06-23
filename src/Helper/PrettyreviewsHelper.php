@@ -38,6 +38,32 @@ class PrettyreviewsHelper
      */
     public function updateGoogleReviewsAjax(): bool
     {
+        return $this->refreshFromGoogle($this->authorizeModuleRequest());
+    }
+
+    /**
+     * AJAX entry point — guarded by CSRF + per-module ACL, then purges the cached reviews.
+     *
+     * @return  bool
+     *
+     * @since   1.6.0
+     */
+    public function purgeReviewsAjax(): bool
+    {
+        return $this->purgeReviews($this->authorizeModuleRequest());
+    }
+
+    /**
+     * Validate a state-changing module AJAX request and return its module id.
+     *
+     * Enforces the Joomla CSRF form token and a per-module core.edit permission check.
+     *
+     * @return  int
+     *
+     * @since   1.6.0
+     */
+    private function authorizeModuleRequest(): int
+    {
         if (!Session::checkToken('post')) {
             throw new NotAllowed(Text::_('JINVALID_TOKEN'), 403);
         }
@@ -55,7 +81,7 @@ class PrettyreviewsHelper
             throw new NotAllowed(Text::_('JGLOBAL_AUTH_ACCESS_DENIED'), 403);
         }
 
-        return $this->refreshFromGoogle($moduleId);
+        return $moduleId;
     }
 
     /**
@@ -145,22 +171,45 @@ class PrettyreviewsHelper
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_MODULE_NOT_FOUND'), 404);
         }
 
-        $params     = json_decode((string) $module->params, true) ?? [];
-        $cid        = (string) ($params['cid'] ?? '');
-        $apiKey     = (string) ($params['apikey'] ?? '');
-        $reviewSort = (string) ($params['reviewsort'] ?? 'most_relevant');
+        $params         = json_decode((string) $module->params, true) ?? [];
+        $cid            = (string) ($params['cid'] ?? '');
+        $apiKey         = (string) ($params['apikey'] ?? '');
+        $reviewSort     = (string) ($params['reviewsort'] ?? 'most_relevant');
+        $reviewLanguage = (string) ($params['reviewlanguage'] ?? '');
 
         if ($cid === '' || $apiKey === '') {
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_MISSING_CREDENTIALS'), 400);
         }
 
-        $googleReviews = $this->fetchFromGoogle($cid, $apiKey, $reviewSort);
+        $googleReviews = $this->fetchFromGoogle($cid, $apiKey, $reviewSort, $reviewLanguage);
 
         $cachePath = $this->cachePath($moduleId);
         $raw       = $this->readJson($cachePath);
         $merged    = $this->mergeReviews($googleReviews, $raw);
 
         return $this->writeJson($cachePath, $merged);
+    }
+
+    /**
+     * Remove all cached reviews for a module by deleting its data file.
+     *
+     * A missing cache file is treated as already purged.
+     *
+     * @param   int  $moduleId  Module record id.
+     *
+     * @return  bool
+     *
+     * @since   1.6.0
+     */
+    public function purgeReviews(int $moduleId): bool
+    {
+        $path = $this->cachePath($moduleId);
+
+        if (!is_file($path)) {
+            return true;
+        }
+
+        return File::delete($path);
     }
 
     /**
@@ -199,16 +248,19 @@ class PrettyreviewsHelper
      * @param   string  $cid         Google place id.
      * @param   string  $apiKey      Google API key.
      * @param   string  $reviewSort  Google reviews_sort value.
+     * @param   string  $language    Google language code; empty falls back to the site language.
      *
      * @return  object
      *
      * @since   1.2.0
      */
-    private function fetchFromGoogle(string $cid, string $apiKey, string $reviewSort): object
+    private function fetchFromGoogle(string $cid, string $apiKey, string $reviewSort, string $language = ''): object
     {
+        $language = $language !== '' ? $language : $this->resolveSiteLanguage();
+
         $url = 'https://maps.googleapis.com/maps/api/place/details/json'
             . '?place_id=' . urlencode($cid)
-            . '&language=nl'
+            . '&language=' . urlencode($language)
             . '&fields=url,rating,reviews,user_ratings_total'
             . '&reviews_sort=' . urlencode($reviewSort)
             . '&key=' . urlencode($apiKey);
@@ -262,6 +314,23 @@ class PrettyreviewsHelper
         }
 
         return $decoded;
+    }
+
+    /**
+     * Resolve the Google language code from the current site language.
+     *
+     * Reduces a Joomla tag such as "nl-NL" to its primary subtag "nl", since most
+     * Joomla region tags are not valid Google Places language codes.
+     *
+     * @return  string
+     *
+     * @since   1.2.0
+     */
+    private function resolveSiteLanguage(): string
+    {
+        $tag = Factory::getApplication()->getLanguage()->getTag();
+
+        return strtolower(explode('-', $tag)[0]);
     }
 
     /**

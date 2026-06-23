@@ -41,7 +41,12 @@ class CustomPrettyField extends FormField
             $app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
 
             try {
-                echo new JsonResponse((new PrettyreviewsHelper())->updateGoogleReviewsAjax());
+                $helper = new PrettyreviewsHelper();
+                $result = $input->getCmd('prettyreviewsAction') === 'purge'
+                    ? $helper->purgeReviewsAjax()
+                    : $helper->updateGoogleReviewsAjax();
+
+                echo new JsonResponse($result);
             } catch (\Throwable $e) {
                 $code = (int) $e->getCode();
 
@@ -69,10 +74,20 @@ class CustomPrettyField extends FormField
             ->onclick('updateReviews(this)')
             ->listCheck(false);
 
+        $toolbar->standardButton('purgeReviews')
+            ->icon('fas fa-trash')
+            ->text(Text::_('MOD_PRETTYREVIEWS_PURGE_REVIEWS'))
+            ->task('')
+            ->attributes($attributes)
+            ->onclick('purgeReviews(this)')
+            ->listCheck(false);
+
         $wa = $app->getDocument()->getWebAssetManager();
         Text::script('MOD_PRETTYREVIEWS_UPDATE_MISSING_MODULE_OR_TOKEN');
         Text::script('MOD_PRETTYREVIEWS_UPDATE_SUCCESS');
         Text::script('MOD_PRETTYREVIEWS_UPDATE_AJAX_ERROR');
+        Text::script('MOD_PRETTYREVIEWS_PURGE_SUCCESS');
+        Text::script('MOD_PRETTYREVIEWS_PURGE_CONFIRM');
 
         $wa->registerAndUseScript('mod_prettyreviews.admin', 'media/mod_prettyreviews/js/prettyreviews.js', [], ['defer' => true]);
 
