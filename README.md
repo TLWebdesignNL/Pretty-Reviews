@@ -96,7 +96,7 @@ You can optionally paste the review link supplied by Google Business Profile int
 
 ### Reviews Visible per Slide
 
-The **Reviews visible per slide** setting controls how many reviews are grouped into each slide in the Default, Card Carousel, and Compact layouts. Choose one to four columns. Small screens display the reviews in one column.
+The **Reviews visible per slide** setting controls how many reviews are visible in the Default, Card Carousel, and Compact layouts. Choose one to four columns. Each carousel action advances by one review, and small screens show one review at a time.
 
 ## Manual Refresh
 

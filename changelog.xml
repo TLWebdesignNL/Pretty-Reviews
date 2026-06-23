@@ -6,6 +6,7 @@
         <addition>
             <item>Optional "Leave a review" button with an automatically generated Place ID link and an administrator-provided URL override.</item>
             <item>Configurable one-to-four-column slides for the Default, Card Carousel, and Compact layouts.</item>
+            <item>Multi-column carousels advance by one review at a time while retaining continuous looping.</item>
             <item>Italian translation.</item>
         </addition>
     </changelog>

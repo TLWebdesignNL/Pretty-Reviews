@@ -34,12 +34,9 @@ $showPhotos        = (bool) $params->get('show_photos', 1);
 $showDate          = (bool) $params->get('show_date', 1);
 $showViewAll       = (bool) $params->get('show_viewall', 1);
 $showWriteReview   = (bool) $params->get('show_write_review', 0);
-$carouselColumns   = (int) $params->get('carousel_columns', 1);
-$carouselColumns   = in_array($carouselColumns, [1, 2, 3, 4], true) ? $carouselColumns : 1;
 $rating            = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount      = (int) ($reviewdata['ratingsCount'] ?? 0);
 $reviews           = array_values($reviewdata['reviews'] ?? []);
-$reviewSlides      = array_chunk($reviews, $carouselColumns);
 $columnClasses     = 'row row-cols-1 g-3';
 
 if ($carouselColumns > 1) {
@@ -109,7 +106,10 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
                 <?php foreach ($reviewSlides as $slideIdx => $slideReviews) : ?>
                     <div class="carousel-item <?php echo ($slideIdx === 0) ? 'active' : ''; ?>">
                         <div class="<?php echo $columnClasses; ?>">
-                            <?php foreach ($slideReviews as $review) :
+                            <?php foreach ($slideReviews as $reviewIdx => $review) :
+                                $responsiveClass = $reviewIdx === 1
+                                    ? ' d-none d-md-block'
+                                    : ($reviewIdx > 1 ? ' d-none d-lg-block' : '');
                                 $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
                                 $authorUrl    = $safeUrl($review['author_url'] ?? '');
                                 $author       = $escape($review['author_name'] ?? '');
@@ -121,7 +121,7 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
                                 $timeAgo      = $escape($review['time_ago'] ?? '');
                                 $reviewRating = (int) ($review['rating'] ?? 0);
                                 ?>
-                                <div class="col">
+                                <div class="col<?php echo $responsiveClass; ?>">
                                     <div class="d-flex align-items-start gap-2">
                                         <?php if ($showPhotos && $photoUrl !== '') : ?>
                                             <img src="<?php echo $photoUrl; ?>"
