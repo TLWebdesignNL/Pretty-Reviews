@@ -21,6 +21,7 @@ $showRatingSummary = (bool) $params->get('show_rating_summary', 1);
 $showPhotos        = (bool) $params->get('show_photos', 1);
 $showDate          = (bool) $params->get('show_date', 1);
 $showViewAll       = (bool) $params->get('show_viewall', 1);
+$showWriteReview   = (bool) $params->get('show_write_review', 0);
 
 $googleReviews = $reviewdata;
 
@@ -33,9 +34,10 @@ $safeUrl = static function ($url) use ($escape): string {
     return $escape($url);
 };
 
-$rating       = (float) ($reviewdata['rating'] ?? 0);
-$ratingsCount = (int) ($googleReviews['ratingsCount'] ?? 0);
-$reviews      = $googleReviews['reviews'] ?? [];
+$rating         = (float) ($reviewdata['rating'] ?? 0);
+$ratingsCount   = (int) ($googleReviews['ratingsCount'] ?? 0);
+$reviews        = $googleReviews['reviews'] ?? [];
+$writeReviewUrl = $safeUrl($writeReviewUrl ?? '');
 ?>
 
 <div class="prettyReviewsWrapper">
@@ -132,6 +134,9 @@ $reviews      = $googleReviews['reviews'] ?? [];
             $reviewsUrl = $safeUrl($googleReviews['url'] ?? '');
             if ($showViewAll && $reviewsUrl !== '') : ?>
                 <a href="<?php echo $reviewsUrl; ?>" target="_blank" rel="noopener" class="btn btn-primary"><?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?></a>
+            <?php endif; ?>
+            <?php if ($showWriteReview && $writeReviewUrl !== '') : ?>
+                <a href="<?php echo $writeReviewUrl; ?>" target="_blank" rel="noopener" class="btn btn-primary"><?php echo Text::_('MOD_PRETTYREVIEWS_WRITE_REVIEW'); ?></a>
             <?php endif; ?>
         </div>
     <?php endif; ?>

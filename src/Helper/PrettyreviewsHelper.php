@@ -416,6 +416,37 @@ class PrettyreviewsHelper
     }
 
     /**
+     * Build the direct Google review URL, allowing an administrator-provided override.
+     *
+     * @param   string  $placeId  Google Place ID configured for the module.
+     * @param   string  $override Optional direct review URL from Google Business Profile.
+     *
+     * @return  string
+     *
+     * @since   1.7.0
+     */
+    public function getWriteReviewUrl(string $placeId, string $override = ''): string
+    {
+        $override = trim($override);
+
+        if ($override !== '' && filter_var($override, FILTER_VALIDATE_URL) !== false) {
+            $scheme = strtolower((string) parse_url($override, PHP_URL_SCHEME));
+
+            if (in_array($scheme, ['http', 'https'], true)) {
+                return $override;
+            }
+        }
+
+        $placeId = trim($placeId);
+
+        if ($placeId === '') {
+            return '';
+        }
+
+        return 'https://search.google.com/local/writereview?placeid=' . rawurlencode($placeId);
+    }
+
+    /**
      * Convert a timestamp to a human-readable "time ago" format.
      *
      * @param   int  $timestamp  The timestamp to convert.

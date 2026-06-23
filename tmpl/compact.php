@@ -33,15 +33,17 @@ $showReviewCount   = (bool) $params->get('show_review_count', 1);
 $showPhotos        = (bool) $params->get('show_photos', 1);
 $showDate          = (bool) $params->get('show_date', 1);
 $showViewAll       = (bool) $params->get('show_viewall', 1);
+$showWriteReview   = (bool) $params->get('show_write_review', 0);
 $rating            = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount      = (int) ($reviewdata['ratingsCount'] ?? 0);
 $reviews           = array_values($reviewdata['reviews'] ?? []);
 $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
+$writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
 ?>
 
 <div class="prettyreviews prettyreviews-compact">
 
-    <?php if ($showRatingSummary || ($showViewAll && $reviewsUrl !== '')) : ?>
+    <?php if ($showRatingSummary || ($showViewAll && $reviewsUrl !== '') || ($showWriteReview && $writeReviewUrl !== '')) : ?>
     <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
         <?php if ($showRatingSummary) : ?>
         <div class="d-flex align-items-center gap-2">
@@ -58,14 +60,26 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
             <?php endif; ?>
         </div>
         <?php endif; ?>
-        <?php if ($showViewAll && $reviewsUrl !== '') : ?>
-            <a href="<?php echo $reviewsUrl; ?>"
-               target="_blank"
-               rel="noopener"
-               class="small text-primary text-decoration-none text-nowrap">
-                <?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?>
-                <i class="fas fa-arrow-right fa-xs" aria-hidden="true"></i>
-            </a>
+        <?php if (($showViewAll && $reviewsUrl !== '') || ($showWriteReview && $writeReviewUrl !== '')) : ?>
+            <div class="d-flex flex-wrap justify-content-end gap-2">
+                <?php if ($showViewAll && $reviewsUrl !== '') : ?>
+                    <a href="<?php echo $reviewsUrl; ?>"
+                       target="_blank"
+                       rel="noopener"
+                       class="small text-primary text-decoration-none text-nowrap">
+                        <?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?>
+                    </a>
+                <?php endif; ?>
+                <?php if ($showWriteReview && $writeReviewUrl !== '') : ?>
+                    <a href="<?php echo $writeReviewUrl; ?>"
+                       target="_blank"
+                       rel="noopener"
+                       class="small fw-semibold text-primary text-decoration-none text-nowrap">
+                        <?php echo Text::_('MOD_PRETTYREVIEWS_WRITE_REVIEW'); ?>
+                        <i class="fas fa-arrow-right fa-xs" aria-hidden="true"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
     <?php endif; ?>

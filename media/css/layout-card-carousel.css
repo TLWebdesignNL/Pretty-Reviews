@@ -3,6 +3,30 @@
     grid-template-columns: 1fr;
 }
 
+.prettyreviews-card-carousel .prettyreviews-card-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .prettyreviews-card-carousel .prettyreviews-columns-2,
+    .prettyreviews-card-carousel .prettyreviews-columns-3,
+    .prettyreviews-card-carousel .prettyreviews-columns-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 992px) {
+    .prettyreviews-card-carousel .prettyreviews-columns-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .prettyreviews-card-carousel .prettyreviews-columns-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 .prettyreviews-card-carousel .carousel-inner .carousel-item {
     grid-row: 1;
     grid-column: 1;

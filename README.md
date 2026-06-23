@@ -5,7 +5,9 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 ## Features
 
 - Display Google rating, review count, review text, author names, profile photos, star ratings, and a "View all reviews" link.
+- Optional "Leave a review" button that opens Google's review form for the configured Place ID.
 - Choose from Bootstrap and UIkit/YOOtheme-compatible layouts.
+- Show one to four review cards per slide in the Card Carousel layout.
 - Fetch reviews manually from the Joomla module edit screen.
 - Optional scheduled refreshes through the companion task plugin.
 - Keep Google API credentials server-side; the browser only sends the module ID and Joomla CSRF token.
@@ -13,7 +15,7 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 - Display reviews by newest first or random order.
 - Limit the number of displayed reviews.
 - Hide reviews without text.
-- Multilingual language files: English, Dutch, German, and French.
+- Multilingual language files: English, Dutch, German, French, and Italian.
 
 ## Requirements
 
@@ -85,6 +87,16 @@ Controls how cached reviews are displayed:
 ### Hide Empty Reviews
 
 When enabled, reviews without text are hidden on the frontend.
+
+### Leave a Review Button
+
+Enable **Show "Leave a review" button** to link visitors directly to Google's review form. By default, the module generates the link from the configured Google Place ID without making another API request.
+
+You can optionally paste the review link supplied by Google Business Profile into **Direct review URL override**.
+
+### Reviews Visible per Slide
+
+The **Reviews visible per slide** setting controls how many cards are grouped into each slide in the Card Carousel layout. Choose one to four columns. Small screens display the cards in one column.
 
 ## Manual Refresh
 

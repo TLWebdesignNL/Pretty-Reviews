@@ -27,15 +27,17 @@ $showReviewCount   = (bool) $params->get('show_review_count', 1);
 $showPhotos        = (bool) $params->get('show_photos', 1);
 $showDate          = (bool) $params->get('show_date', 1);
 $showViewAll       = (bool) $params->get('show_viewall', 1);
+$showWriteReview   = (bool) $params->get('show_write_review', 0);
 $rating            = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount      = (int) ($reviewdata['ratingsCount'] ?? 0);
 $reviews           = array_values($reviewdata['reviews'] ?? []);
 $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
+$writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
 ?>
 
 <div class="prettyreviews prettyreviews-uikit-list">
 
-    <?php if ($showRatingSummary || ($showViewAll && $reviewsUrl !== '')) : ?>
+    <?php if ($showRatingSummary || ($showViewAll && $reviewsUrl !== '') || ($showWriteReview && $writeReviewUrl !== '')) : ?>
     <div class="uk-flex uk-flex-column uk-flex-row@m uk-flex-between@m uk-flex-middle@m uk-grid-small uk-margin-medium-bottom" uk-grid>
         <?php if ($showRatingSummary) : ?>
         <div>
@@ -55,14 +57,22 @@ $reviewsUrl        = $safeUrl($reviewdata['url'] ?? '');
             <?php endif; ?>
         </div>
         <?php endif; ?>
-        <?php if ($showViewAll && $reviewsUrl !== '') : ?>
-            <div>
-                <a href="<?php echo $reviewsUrl; ?>"
-                   target="_blank"
-                   rel="noopener"
-                   class="uk-button uk-button-default uk-button-small">
-                    <?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?>
-                </a>
+        <?php if (($showViewAll && $reviewsUrl !== '') || ($showWriteReview && $writeReviewUrl !== '')) : ?>
+            <div class="uk-flex uk-flex-wrap uk-grid-small" uk-grid>
+                <?php if ($showViewAll && $reviewsUrl !== '') : ?>
+                    <div>
+                        <a href="<?php echo $reviewsUrl; ?>" target="_blank" rel="noopener" class="uk-button uk-button-default uk-button-small">
+                            <?php echo Text::_('MOD_PRETTYREVIEWS_VIEWALLREVIEWS'); ?>
+                        </a>
+                    </div>
+                <?php endif; ?>
+                <?php if ($showWriteReview && $writeReviewUrl !== '') : ?>
+                    <div>
+                        <a href="<?php echo $writeReviewUrl; ?>" target="_blank" rel="noopener" class="uk-button uk-button-primary uk-button-small">
+                            <?php echo Text::_('MOD_PRETTYREVIEWS_WRITE_REVIEW'); ?>
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

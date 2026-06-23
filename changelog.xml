@@ -2,6 +2,16 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>1.7.0</version>
+        <addition>
+            <item>Optional "Leave a review" button with an automatically generated Place ID link and an administrator-provided URL override.</item>
+            <item>Configurable one-to-four-column slides for the Card Carousel layout.</item>
+            <item>Italian translation.</item>
+        </addition>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>1.6.0</version>
         <addition>
             <item>Review language setting: choose which language Google returns review text in, or leave it on "Use site default" to follow the website language.</item>

@@ -7,7 +7,7 @@
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>1.6.0</version>
+    <version>1.7.0</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -200,6 +200,40 @@
                 >
                     <option value="0">JNO</option>
                     <option value="1">JYES</option>
+                </field>
+                <field
+                        name="show_write_review"
+                        type="radio"
+                        label="MOD_PRETTYREVIEWS_FIELD_SHOW_WRITE_REVIEW_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_SHOW_WRITE_REVIEW_DESC"
+                        default="0"
+                        layout="joomla.form.field.radio.switcher"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field
+                        name="write_review_url"
+                        type="url"
+                        label="MOD_PRETTYREVIEWS_FIELD_WRITE_REVIEW_URL_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_WRITE_REVIEW_URL_DESC"
+                        filter="url"
+                        validate="url"
+                        showon="show_write_review:1"
+                />
+                <field
+                        name="carousel_columns"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_CAROUSEL_COLUMNS_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_CAROUSEL_COLUMNS_DESC"
+                        default="1"
+                        filter="integer"
+                        validate="options"
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
                 </field>
                 <field
                         name="review_maxchars"
