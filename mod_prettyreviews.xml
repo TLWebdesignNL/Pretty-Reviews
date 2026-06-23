@@ -141,6 +141,74 @@
                         validate="moduleLayout"
                 />
                 <field
+                        name="carousel_columns_mobile"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_MOBILE_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_MOBILE_DESC"
+                        default="1"
+                        filter="integer"
+                        validate="options"
+                        showon="layout!:_:list,_:uikit-list,_:legacy"
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </field>
+                <field
+                        name="carousel_columns_tablet"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_TABLET_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_TABLET_DESC"
+                        default="2"
+                        filter="integer"
+                        validate="options"
+                        showon="layout!:_:list,_:uikit-list,_:legacy"
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </field>
+                <field
+                        name="carousel_columns_desktop"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_DESKTOP_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_DESKTOP_DESC"
+                        default="4"
+                        filter="integer"
+                        validate="options"
+                        showon="layout!:_:list,_:uikit-list,_:legacy"
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </field>
+                <field
+                        name="carousel_columns_wide"
+                        type="list"
+                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_DESC"
+                        default="4"
+                        filter="integer"
+                        validate="options"
+                        showon="layout!:_:list,_:uikit-list,_:legacy"
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </field>
+                <field
                         name="autoplay"
                         type="radio"
                         label="MOD_PRETTYREVIEWS_FIELD_AUTOPLAY_LABEL"
@@ -233,70 +301,6 @@
                         validate="url"
                         showon="show_write_review:1"
                 />
-                <field
-                        name="carousel_columns_mobile"
-                        type="list"
-                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_MOBILE_LABEL"
-                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_MOBILE_DESC"
-                        default="1"
-                        filter="integer"
-                        validate="options"
-                >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </field>
-                <field
-                        name="carousel_columns_tablet"
-                        type="list"
-                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_TABLET_LABEL"
-                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_TABLET_DESC"
-                        default="2"
-                        filter="integer"
-                        validate="options"
-                >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </field>
-                <field
-                        name="carousel_columns_desktop"
-                        type="list"
-                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_DESKTOP_LABEL"
-                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_DESKTOP_DESC"
-                        default="4"
-                        filter="integer"
-                        validate="options"
-                >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </field>
-                <field
-                        name="carousel_columns_wide"
-                        type="list"
-                        label="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_LABEL"
-                        description="MOD_PRETTYREVIEWS_FIELD_COLUMNS_WIDE_DESC"
-                        default="4"
-                        filter="integer"
-                        validate="options"
-                >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </field>
                 <field
                         name="review_maxchars"
                         type="number"
