@@ -152,6 +152,18 @@
                     <option value="1">JYES</option>
                 </field>
                 <field
+                        name="autoplay_interval"
+                        type="number"
+                        label="MOD_PRETTYREVIEWS_FIELD_AUTOPLAY_INTERVAL_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_AUTOPLAY_INTERVAL_DESC"
+                        default="5"
+                        min="1"
+                        max="60"
+                        step="1"
+                        filter="integer"
+                        showon="autoplay:1"
+                />
+                <field
                         name="show_rating_summary"
                         type="radio"
                         label="MOD_PRETTYREVIEWS_FIELD_SHOW_RATING_SUMMARY_LABEL"
@@ -234,6 +246,8 @@
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
                 </field>
                 <field
                         name="review_maxchars"

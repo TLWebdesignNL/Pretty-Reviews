@@ -99,6 +99,7 @@ $writeReviewUrl    = $safeUrl($writeReviewUrl ?? '');
         <div class="prettyreviews-track"
              data-prettyreviews-track
              data-autoplay="<?php echo $autoPlay ? '1' : '0'; ?>"
+             data-autoplay-interval="<?php echo (int) $autoplayInterval * 1000; ?>"
              style="--pr-cols-config: <?php echo $carouselColumns; ?>;"
              role="region"
              aria-roledescription="carousel"

@@ -78,6 +78,7 @@ const enhance = (wrapper) => {
     }
 
     let timer = null;
+    const interval = Number.parseInt(track.dataset.autoplayInterval, 10) || 5000;
 
     const advance = () => {
         if (atEnd()) {
@@ -89,7 +90,7 @@ const enhance = (wrapper) => {
 
     const start = () => {
         if (timer === null && scrollable()) {
-            timer = window.setInterval(advance, 5000);
+            timer = window.setInterval(advance, interval);
         }
     };
 
