@@ -1,13 +1,15 @@
 # Pretty Reviews
 
-Pretty Reviews is a Joomla site module that displays Google business reviews in a Bootstrap carousel. It fetches reviews from the Google Places API, stores them in a local JSON cache, and lets you choose how reviews are shown on the frontend.
+Pretty Reviews is a Joomla site module that displays Google business reviews in a responsive, multi-column carousel. It fetches reviews from the Google Places API, stores them in a local JSON cache, and lets you choose how reviews are shown on the frontend.
 
 ## Features
 
 - Display Google rating, review count, review text, author names, profile photos, star ratings, and a "View all reviews" link.
 - Optional "Leave a review" button that opens Google's review form for the configured Place ID.
-- Choose from Bootstrap and UIkit/YOOtheme-compatible layouts.
-- Show one to four reviews per slide in the Default, Card Carousel, and Compact layouts.
+- Choose from Bootstrap layouts (Default, Card Carousel, Compact), UIkit/YOOtheme layouts (UIkit Default, UIkit Compact, UIkit List), plus a simple List and a classic Legacy layout.
+- Set responsive column counts per breakpoint — 1 to 6 reviews side by side for mobile, tablet, desktop, and wide screens — in the carousel layouts.
+- Bootstrap layouts use a native CSS scroll-snap carousel: native touch swipe, one-column-at-a-time navigation, a usable scrollable fallback without JavaScript, and no inline styles (CSP-friendly). UIkit layouts use UIkit's native slider.
+- Optional autoplay with a configurable interval (1–60 seconds).
 - Fetch reviews manually from the Joomla module edit screen.
 - Optional scheduled refreshes through the companion task plugin.
 - Keep Google API credentials server-side; the browser only sends the module ID and Joomla CSRF token.
@@ -94,9 +96,17 @@ Enable **Show "Leave a review" button** to link visitors directly to Google's re
 
 You can optionally paste the review link supplied by Google Business Profile into **Direct review URL override**.
 
-### Reviews Visible per Slide
+### Responsive Columns
 
-The **Reviews visible per slide** setting controls how many reviews are visible in the Default, Card Carousel, and Compact layouts. Choose one to four columns. JavaScript regroups the single Bootstrap carousel at responsive breakpoints: mobile shows and advances one review, tablet up to two, and desktop uses the configured amount.
+Each carousel layout (Default, Card Carousel, Compact, UIkit Default, UIkit Compact) can show a different number of reviews side by side per breakpoint. Set **Columns on mobile / tablet / desktop / wide screens** to any value from 1 to 6.
+
+The Bootstrap layouts apply the column count with CSP-safe utility classes on a CSS scroll-snap track (no inline styles), and the UIkit layouts use UIkit's native responsive grid. The List, UIkit List, and Legacy layouts do not use columns, so these settings are hidden when one of them is selected.
+
+Modules upgraded from a pre-2.0.0 release are kept at a single column on every breakpoint so their appearance does not change after the update; adjust the settings to opt in to multiple columns.
+
+### Autoplay
+
+Enable **Autoplay** to advance the carousel automatically, and set the **Autoplay interval** (1–60 seconds) to control the delay between steps. The interval field appears only when autoplay is enabled. Autoplay pauses on hover/focus and is disabled for visitors who prefer reduced motion.
 
 ## Manual Refresh
 
