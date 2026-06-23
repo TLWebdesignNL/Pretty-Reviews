@@ -12,7 +12,8 @@
 
 use Joomla\CMS\Language\Text;
 
-$app->getDocument()->getWebAssetManager()->useScript('mod_prettyreviews.responsive-carousel');
+$app->getDocument()->getWebAssetManager()
+    ->registerAndUseScript('mod_prettyreviews.responsive-carousel', 'media/mod_prettyreviews/js/responsive-carousel.js', [], ['defer' => true], ['core']);
 
 if ((int) $params->get('load_layout_css', 1) === 1) {
     $app->getDocument()->getWebAssetManager()
