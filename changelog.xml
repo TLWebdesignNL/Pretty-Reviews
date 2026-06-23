@@ -5,14 +5,16 @@
         <version>2.0.0</version>
         <addition>
             <item>Optional "Leave a review" button with an automatically generated Place ID link and an administrator-provided URL override.</item>
-            <item>Configurable one-to-four-column slides for the Default, Card Carousel, and Compact layouts.</item>
+            <item>Per-breakpoint responsive columns: choose 1 to 6 columns independently for mobile, tablet, desktop, and wide screens. Applies to the Bootstrap layouts (Default, Card Carousel, Compact) and the UIkit slider layouts (UIkit Default, UIkit Compact).</item>
+            <item>Configurable autoplay interval (1-60 seconds). The setting is hidden unless autoplay is enabled.</item>
             <item>Italian translation.</item>
         </addition>
         <change>
-            <item>The carousel has been rebuilt on native CSS scroll-snap instead of the Bootstrap carousel. Responsive column counts are now driven entirely by CSS, touch swipe is native, the previous/next buttons advance one column at a time, and the carousel remains usable as a scrollable row when JavaScript is unavailable.</item>
+            <item>The Bootstrap carousel has been rebuilt on native CSS scroll-snap. Touch swipe is native, the previous/next buttons advance one column at a time, and the carousel stays usable as a scrollable row when JavaScript is unavailable. Column counts are applied with CSP-safe utility classes (no inline styles).</item>
+            <item>The UIkit layouts keep their native uk-slider but now honour the per-breakpoint column and autoplay-interval settings (using UIkit's own breakpoints).</item>
         </change>
         <note>
-            <item>Breaking change: the carousel markup and CSS classes have changed (the Bootstrap .carousel / .carousel-item / .prettyreviews-columns-* structure is replaced by .prettyreviews-track / .prettyreviews-slide). Re-copy any template overrides of the Default, Card Carousel, or Compact layouts, and update custom CSS that targeted the old classes.</item>
+            <item>Breaking change: the Bootstrap carousel markup and CSS classes have changed (the old .carousel / .carousel-item structure is replaced by .prettyreviews-track / .prettyreviews-slide with pr-cols-* column utilities). Re-copy any template overrides of the Default, Card Carousel, or Compact layouts, and update custom CSS that targeted the old classes.</item>
         </note>
     </changelog>
     <changelog>
