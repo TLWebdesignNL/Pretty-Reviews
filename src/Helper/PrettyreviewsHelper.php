@@ -99,10 +99,10 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Apply display options (hideEmpty / sort / limit) to a raw review payload.
+     * Apply display options (minRating / hideEmpty / sort / limit) to a raw review payload.
      *
      * @param   array  $raw   Raw payload as returned by loadRaw().
-     * @param   array  $opts  Keys: hideEmpty (int), sort (string), limit (int|null).
+     * @param   array  $opts  Keys: minRating (int), hideEmpty (int), sort (string), limit (int|null).
      *
      * @return  array
      *
@@ -114,11 +114,19 @@ class PrettyreviewsHelper
             return $raw;
         }
 
+        $minRating = (int) ($opts['minRating'] ?? 0);
         $hideEmpty = (int) ($opts['hideEmpty'] ?? 0);
         $sort      = (string) ($opts['sort'] ?? 'newest');
         $limit     = $opts['limit'] ?? null;
 
         $reviews = $raw['reviews'];
+
+        if ($minRating > 1) {
+            $reviews = array_filter($reviews, static function ($r) use ($minRating) {
+                $rating = is_array($r) && isset($r['rating']) ? (int) $r['rating'] : 0;
+                return $rating >= $minRating;
+            });
+        }
 
         if ($hideEmpty === 1) {
             $reviews = array_filter($reviews, static function ($r) {
@@ -336,8 +344,10 @@ class PrettyreviewsHelper
     /**
      * Merge a fresh Google response into the existing raw cache payload.
      *
-     * Only adds reviews not already cached (keyed by their unix timestamp) and
-     * with a rating of 4 or higher. Top-level rating / count / url are overwritten.
+     * Adds every review not already cached (keyed by its unix timestamp), regardless
+     * of star rating — filtering by minimum rating is a display-time concern handled
+     * in present(), so lowering the threshold later never loses cached reviews.
+     * Top-level rating / count / url are overwritten.
      *
      * @param   object  $googleReviews  Decoded API response.
      * @param   array   $raw            Existing raw cache (may be empty).
@@ -363,9 +373,7 @@ class PrettyreviewsHelper
         if (isset($googleReviews->result->reviews)) {
             foreach ($googleReviews->result->reviews as $review) {
                 if (!isset($raw['reviews']) || !array_key_exists($review->time, $raw['reviews'])) {
-                    if ($review->rating >= 4) {
-                        $raw['reviews'][$review->time] = $review;
-                    }
+                    $raw['reviews'][$review->time] = $review;
                 }
             }
         }

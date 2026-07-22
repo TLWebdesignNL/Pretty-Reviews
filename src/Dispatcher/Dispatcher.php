@@ -45,6 +45,7 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
             'limit'     => $params['limit'] ?? null,
             'sort'      => $params['displaysort'] ?? 'newest',
             'hideEmpty' => $params['hideemptyreviews'] ?? 0,
+            'minRating' => $params['minrating'] ?? 4,
         ]);
         $data['writeReviewUrl'] = $helper->getWriteReviewUrl(
             (string) ($params['cid'] ?? ''),

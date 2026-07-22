@@ -2,6 +2,17 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>2.1.0</version>
+        <addition>
+            <item>Configurable minimum star rating: choose to show all reviews, or only those with at least 2, 3, 4, or 5 stars. The default is 4 stars and up, matching the module's previous behaviour.</item>
+        </addition>
+        <change>
+            <item>Reviews of every star rating are now fetched and cached; the minimum-rating filter is applied at display time, so you can raise or lower the threshold at any time without re-fetching. Existing caches only hold 4-star-and-up reviews, so any lower-rated reviews will appear as they are fetched from Google going forward.</item>
+        </change>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>2.0.0</version>
         <addition>
             <item>Optional "Leave a review" button with an automatically generated Place ID link and an administrator-provided URL override.</item>
