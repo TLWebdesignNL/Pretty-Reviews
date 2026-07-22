@@ -112,3 +112,62 @@ jobs:
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: add updates.xml entry for ${{ steps.vars.outputs.tag }}"
           git push origin main
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.vars.outputs.version }}
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping."
+            exit 0
+          fi
+
+          # Build release notes from the matching changelog.xml entry.
+          python3 - <<'EOF'
+          import os, xml.etree.ElementTree as ET
+
+          version  = os.environ["VERSION"]
+          headings = {
+              "security": "Security",
+              "addition": "New",
+              "change":   "Changed",
+              "fix":      "Fixed",
+              "note":     "Notes",
+          }
+
+          notes = ""
+          try:
+              root  = ET.parse("changelog.xml").getroot()
+              entry = next(
+                  (c for c in root.findall("changelog")
+                   if (c.findtext("version") or "").strip() == version),
+                  None,
+              )
+              if entry is not None:
+                  for tag, title in headings.items():
+                      lines = []
+                      for el in entry.findall(tag):
+                          items = el.findall("item")
+                          if items:
+                              lines += ["".join(i.itertext()).strip() for i in items]
+                          else:
+                              lines.append("".join(el.itertext()).strip())
+                      lines = [l for l in lines if l]
+                      if lines:
+                          notes += f"## {title}\n\n"
+                          notes += "\n".join(f"- {l}" for l in lines) + "\n\n"
+          except Exception as e:
+              print(f"Could not parse changelog.xml: {e}")
+
+          with open("release_notes.md", "w") as f:
+              f.write(notes.strip() + "\n")
+          EOF
+
+          if grep -q '[^[:space:]]' release_notes.md 2>/dev/null; then
+            gh release create "$TAG" --title "Pretty Reviews ${VERSION}" --notes-file release_notes.md
+          else
+            echo "No changelog entry for ${VERSION}; falling back to auto-generated notes."
+            gh release create "$TAG" --title "Pretty Reviews ${VERSION}" --generate-notes
+          fi
