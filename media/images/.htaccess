@@ -1,0 +1,7 @@
+## Reviewer profile photos are downloaded here from Google. Nothing in this folder
+## is ever executed, so refuse to serve anything that a server might try to run.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(?i:php|phtml|phar|php[3-8]|pl|py|cgi|asp|sh)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

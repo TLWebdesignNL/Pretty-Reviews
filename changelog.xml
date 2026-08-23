@@ -2,6 +2,21 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>2.2.0</version>
+        <addition>
+            <item>Reviewer profile photos are now stored on your own website and served from your own domain, so no visitor data is sent to Google when the reviews are displayed. Photos are downloaded whenever the reviews are updated, and any that are still missing are collected in the background as the module is displayed.</item>
+            <item>Reviewers whose photo has not been stored yet, or could not be downloaded, are shown a locally generated avatar with their initials instead.</item>
+        </addition>
+        <change>
+            <item>Photos are stored per module under media/mod_prettyreviews/images/, and are removed together with the reviews when a module is purged. Photos belonging to reviews that are no longer cached are cleaned up automatically.</item>
+        </change>
+        <note>
+            <item>Existing modules keep working unchanged. Their photos are collected gradually as the module is displayed; pressing Fetch Google Reviews (or running the Pretty Reviews task plugin) stores them all at once.</item>
+        </note>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>2.1.0</version>
         <addition>
             <item>Configurable minimum star rating: choose to show all reviews, or only those with at least 2, 3, 4, or 5 stars. The default is 4 stars and up, matching the module's previous behaviour.</item>

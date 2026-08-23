@@ -53,6 +53,8 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
         );
 
         if (isset($data['reviewdata']['reviews']) && is_array($data['reviewdata']['reviews'])) {
+            $data['reviewdata']['reviews'] = $helper->ensureLocalPhotos($moduleId, $data['reviewdata']['reviews']);
+
             foreach ($data['reviewdata']['reviews'] as &$review) {
                 if (!is_array($review)) {
                     continue;
@@ -60,6 +62,12 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
 
                 $timestamp          = (int) ($review['time'] ?? 0);
                 $review['time_ago'] = $timestamp > 0 ? $helper->timeAgo($timestamp) : '';
+
+                // Point every layout at the copy stored on this site, so reviewer photos
+                // are always served from our own domain and never fetched from Google by
+                // the visitor's browser. Replacing the URL in place keeps all layouts —
+                // and any template override — working unchanged.
+                $review['profile_photo_url'] = $helper->localPhotoUrl($moduleId, $review);
             }
 
             unset($review);
