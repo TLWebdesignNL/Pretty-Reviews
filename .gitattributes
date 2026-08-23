@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# The release zip is the GitHub archive of the tag, so keep the tests out of it:
+# they are for developing the module, not for running it.
+/tests export-ignore
