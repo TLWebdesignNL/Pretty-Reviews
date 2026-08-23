@@ -38,7 +38,6 @@ $stored = $images->syncReviewPhotos(7, ['reviews' => [
 
 check('a file is stored per reviewer', count(glob($dir . '/*.png')) === 2);
 check('the review points at it', preg_match('/^[0-9a-f]{32}\.png$/', $stored['reviews'][100]['profile_photo_local']) === 1);
-check('no attempt marker is left behind', !isset($stored['reviews'][100]['profile_photo_attempt']));
 check('the google url is left untouched', $stored['reviews'][100]['profile_photo_url'] === $source . '1=s128-c-rp-mo');
 check('one size is requested for every avatar', str_ends_with(requests()[0]['url'], '=s256-c'));
 check(
@@ -49,7 +48,7 @@ check(
 check('no initials avatar is written when the download works', glob($dir . '/initials-*.svg') === []);
 
 respondWith(200, jpegBytes());
-$jpeg = $images->syncReviewPhotos(7, ['reviews' => [700 => $review(700, 'Jay Peg', $source . 'j=s1')]], 25, 10, false);
+$jpeg = $images->syncReviewPhotos(71, ['reviews' => [700 => $review(700, 'Jay Peg', $source . 'j=s1')]]);
 check('the extension comes from the bytes, not the url', str_ends_with($jpeg['reviews'][700]['profile_photo_local'], '.jpg'));
 
 group('Recognising a photo it already has');
@@ -74,17 +73,12 @@ $failed = $images->syncReviewPhotos(7, ['reviews' => [400 => $review(400, 'Kathe
 check('an initials avatar takes over', preg_match('/^initials-[0-9a-f]{32}\.svg$/', $failed['reviews'][400]['profile_photo_local']) === 1);
 check('it is written to disk', is_file($dir . '/' . $failed['reviews'][400]['profile_photo_local']));
 check('it carries the reviewer initials', str_contains(file_get_contents($dir . '/' . $failed['reviews'][400]['profile_photo_local']), '>KJ<'));
-check('the failure is remembered', ($failed['reviews'][400]['profile_photo_attempt'] ?? 0) > 0);
 check('the original url is tried when the resized one fails', count(requests()) === 2);
-
-resetRequests();
-$render = $images->syncReviewPhotos(7, $failed, 3, 3, false);
-check('a page render does not retry a fresh failure', requests() === []);
-check('the initials avatar stays while it is in use', is_file($dir . '/' . $render['reviews'][400]['profile_photo_local']));
+check('the initials avatar survives the run', is_file($dir . '/' . $failed['reviews'][400]['profile_photo_local']));
 
 resetRequests();
 $images->syncReviewPhotos(7, $failed);
-check('an explicit refresh tries again straight away', requests() !== []);
+check('the next refresh tries the failed photo again', requests() !== []);
 
 group('Refusing photos from anywhere but Google');
 respondWith(200, pngBytes());
@@ -98,7 +92,7 @@ foreach ([
     'credentials in the url'  => 'https://evil.com@lh3.googleusercontent.com/a/x',
 ] as $label => $url) {
     resetRequests();
-    $refused = $images->syncReviewPhotos(7, ['reviews' => [500 => $review(500, 'X', $url)]], 25, 10, false);
+    $refused = $images->syncReviewPhotos(72, ['reviews' => [500 => $review(500, 'X', $url)]]);
 
     check(
         "refuses $label",
@@ -117,13 +111,13 @@ foreach ([
     'an oversized image' => pngBytes() . str_repeat('x', 2100000),
 ] as $label => $body) {
     respondWith(200, $body);
-    $refused = $images->syncReviewPhotos(7, ['reviews' => [600 => $review(600, 'Y', $source . 'z=s1')]], 25, 10, false);
+    $refused = $images->syncReviewPhotos(73, ['reviews' => [600 => $review(600, 'Y', $source . 'z=s1')]]);
 
     check("refuses $label", str_starts_with($refused['reviews'][600]['profile_photo_local'], 'initials-'));
 }
 
 respondWith(200, pngBytes() . str_repeat('x', 2000));
-$justUnder = $images->syncReviewPhotos(7, ['reviews' => [610 => $review(610, 'W', $source . 'w=s1')]], 25, 10, false);
+$justUnder = $images->syncReviewPhotos(73, ['reviews' => [610 => $review(610, 'W', $source . 'w=s1')]]);
 check('accepts an image comfortably under the cap', str_ends_with($justUnder['reviews'][610]['profile_photo_local'], '.png'));
 
 group('Refusing a tampered filename');
@@ -206,19 +200,19 @@ check('with nothing left pending', $images->pendingDownloads() === 0);
 // A photo whose download fails is not "pending": pressing the button again straight
 // away would not help it, so it must not keep the message alive.
 respondWith(404, '');
-$images->syncReviewPhotos(7, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]]);
+$images->syncReviewPhotos(74, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]]);
 check('a failed download is not reported as pending', $images->pendingDownloads() === 0);
 respondWith(200, pngBytes());
 
 group('Pruning');
 $keeper = $partial['reviews'][800]['profile_photo_local'];
-$images->syncReviewPhotos(7, ['reviews' => [800 => $partial['reviews'][800]]], 25, 10);
+$images->syncReviewPhotos(7, ['reviews' => [800 => $partial['reviews'][800]]]);
 check('a full run keeps only what is still referenced', Joomla\Filesystem\Folder::files($dir) === [$keeper]);
 
 file_put_contents($dir . '/.htaccess', 'x');
 file_put_contents($dir . '/index.html', '');
 file_put_contents($dir . '/notes.txt', 'something an administrator put here');
-$images->syncReviewPhotos(7, ['reviews' => [800 => $partial['reviews'][800]]], 25, 10);
+$images->syncReviewPhotos(7, ['reviews' => [800 => $partial['reviews'][800]]]);
 
 check('index.html survives', is_file($dir . '/index.html'));
 check('.htaccess survives', is_file($dir . '/.htaccess'));
@@ -234,9 +228,7 @@ $initialsFor = static function (string $name) use ($images): string {
     $result = $images->syncReviewPhotos(
         9,
         ['reviews' => [1 => ['time' => 1, 'author_name' => $name, 'profile_photo_url' => 'https://example.com/x']]],
-        0,
-        10,
-        false
+        0
     );
 
     return file_get_contents(JPATH_ROOT . '/media/mod_prettyreviews/images/9/' . $result['reviews'][1]['profile_photo_local']);
@@ -259,14 +251,14 @@ check('markup in a name cannot reach the avatar', !str_contains($markup, 'script
 check('the avatar is well formed', simplexml_load_string($markup) !== false);
 
 group('Payloads it should leave alone');
-$empty = $images->syncReviewPhotos(7, ['reviews' => [1 => $review(1, 'No Photo', '')]], 25, 10, false);
+$empty = $images->syncReviewPhotos(7, ['reviews' => [1 => $review(1, 'No Photo', '')]]);
 check('a review with no photo gets no local file', !isset($empty['reviews'][1]['profile_photo_local']));
 
 $untouched = ['reviews' => [1 => ['profile_photo_url' => $source]]];
 check('module 0 is left alone', $images->syncReviewPhotos(0, $untouched) === $untouched);
 check('an empty payload is left alone', $images->syncReviewPhotos(7, []) === []);
 
-$odd = $images->syncReviewPhotos(7, ['reviews' => [1 => 'not a review']], 25, 10, false);
+$odd = $images->syncReviewPhotos(7, ['reviews' => [1 => 'not a review']]);
 check('an entry that is not a review is skipped', $odd['reviews'][1] === 'not a review');
 
 finish();

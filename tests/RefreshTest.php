@@ -70,20 +70,14 @@ $offline = $images->syncReviewPhotos(5, $merged);
 
 check('every reviewer gets an initials avatar', count(glob($dir . '/initials-*.svg')) === 2);
 check('no photo is stored', glob($dir . '/*.png') === []);
-check('the failure is remembered', ($offline['reviews'][100]['profile_photo_attempt'] ?? 0) > 0);
-
-resetRequests();
-$images->syncReviewPhotos(5, $offline, 3, 3, false);
-check('a page render in the meantime does not retry', requests() === []);
 
 group('The refresh after that');
 respondWith(200, pngBytes());
 $online = $images->syncReviewPhotos(5, $offline);
 
-check('somebody asking for a refresh overrides the wait', count(glob($dir . '/*.png')) === 2);
+check('the failed photos are tried again', count(glob($dir . '/*.png')) === 2);
 check('the initials avatars are cleaned up', glob($dir . '/initials-*.svg') === []);
 check('the reviews point at the photos', str_ends_with($online['reviews'][100]['profile_photo_local'], '.png'));
-check('the attempt marker is dropped', !isset($online['reviews'][100]['profile_photo_attempt']));
 
 group('Reviews and photos going out of the cache together');
 $reduced = $online;

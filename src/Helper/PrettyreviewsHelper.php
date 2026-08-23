@@ -243,47 +243,6 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Make sure the reviews about to be rendered have a locally stored photo.
-     *
-     * Reviews cached before this feature existed, and photos whose download failed,
-     * are backfilled here a few seconds' worth at a time so a page render stays quick. Anything that
-     * goes wrong is swallowed: a site that cannot write to its media folder shows no
-     * photos rather than an error.
-     *
-     * @param   int    $moduleId  Module record id.
-     * @param   array  $reviews   Reviews as returned by present().
-     *
-     * @return  array  The same reviews, with their photo keys filled in.
-     *
-     * @since   2.2.0
-     */
-    public function ensureLocalPhotos(int $moduleId, array $reviews): array
-    {
-        if ($moduleId <= 0 || $reviews === []) {
-            return $reviews;
-        }
-
-        try {
-            $synced = $this->imageCache()->syncReviewPhotos(
-                $moduleId,
-                ['reviews' => $reviews],
-                ImageCacheHelper::DOWNLOAD_SECONDS_FRONTEND,
-                ImageCacheHelper::HTTP_TIMEOUT_FRONTEND,
-                // Not a refresh: these are only the reviews being displayed, so this run
-                // must neither decide which stored files are still in use nor retry a
-                // photo that has just failed.
-                false
-            )['reviews'] ?? $reviews;
-
-            $this->persistPhotoKeys($moduleId, $synced);
-        } catch (\Throwable $e) {
-            return $reviews;
-        }
-
-        return $synced;
-    }
-
-    /**
      * Build the public URL of a review's locally stored photo.
      *
      * @param   int    $moduleId  Module record id.
@@ -300,60 +259,6 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Write back the photo keys the frontend backfill produced.
-     *
-     * Only the two photo keys are copied onto the stored reviews. The rest of the
-     * in-memory review has been through present() and the dispatcher, so writing it
-     * back would overwrite the cache with display data — not least the Google photo
-     * URL, which the image cache needs to keep re-fetching from. Re-reading the file
-     * first also keeps a refresh running at the same moment from being overwritten.
-     *
-     * @param   int    $moduleId  Module record id.
-     * @param   array  $reviews   Reviews carrying the freshly resolved photo keys.
-     *
-     * @return  void
-     *
-     * @since   2.2.0
-     */
-    private function persistPhotoKeys(int $moduleId, array $reviews): void
-    {
-        $path    = $this->cachePath($moduleId);
-        $raw     = $this->readJson($path);
-        $changed = false;
-
-        if (empty($raw['reviews']) || !is_array($raw['reviews'])) {
-            return;
-        }
-
-        foreach ($reviews as $key => $review) {
-            if (!is_array($review) || !is_array($raw['reviews'][$key] ?? null)) {
-                continue;
-            }
-
-            foreach (['profile_photo_local', 'profile_photo_attempt'] as $field) {
-                $stored = $raw['reviews'][$key][$field] ?? null;
-                $fresh  = $review[$field] ?? null;
-
-                if ($stored === $fresh) {
-                    continue;
-                }
-
-                if ($fresh === null) {
-                    unset($raw['reviews'][$key][$field]);
-                } else {
-                    $raw['reviews'][$key][$field] = $fresh;
-                }
-
-                $changed = true;
-            }
-        }
-
-        if ($changed) {
-            $this->writeJson($path, $raw);
-        }
-    }
-
-    /**
      * Resolve the photo cache, creating it on first use.
      *
      * Built here rather than injected, because CustomPrettyField constructs this
@@ -363,7 +268,7 @@ class PrettyreviewsHelper
      *
      * @since   2.2.0
      */
-    protected function imageCache(): ImageCacheHelper
+    private function imageCache(): ImageCacheHelper
     {
         return $this->imageCache ??= new ImageCacheHelper();
     }

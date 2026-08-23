@@ -4,7 +4,7 @@
         <type>module</type>
         <version>2.2.0</version>
         <addition>
-            <item>Reviewer profile photos are now stored on your own website and served from your own domain, so no visitor data is sent to Google when the reviews are displayed. Photos are downloaded whenever the reviews are updated, and any that are still missing are collected in the background as the module is displayed.</item>
+            <item>Reviewer profile photos are now stored on your own website and served from your own domain, so no visitor data is sent to Google when the reviews are displayed. Photos are downloaded whenever the reviews are updated; nothing is ever downloaded while a page is being viewed.</item>
             <item>Reviewers whose photo has not been stored yet, or could not be downloaded, are shown a locally generated avatar with their initials instead.</item>
         </addition>
         <change>
@@ -12,7 +12,7 @@
             <item>To keep the Update Reviews button responsive, an update spends at most about fifteen seconds downloading photos: a fast connection fills a large cache in one go, a slow one leaves the remainder for the next update. When photos are left waiting, the message after the update says how many, so you know to press the button again.</item>
         </change>
         <note>
-            <item>Existing modules keep working unchanged. Their photos are collected gradually as the module is displayed; pressing Fetch Google Reviews (or running the Pretty Reviews task plugin) stores them all at once.</item>
+            <item>Existing modules keep working unchanged, but reviewer photos are not shown until the reviews are next updated — press Fetch Google Reviews once, or wait for the Pretty Reviews task plugin's next run.</item>
         </note>
     </changelog>
     <changelog>

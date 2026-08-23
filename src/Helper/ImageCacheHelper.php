@@ -62,35 +62,14 @@ class ImageCacheHelper
      *
      * @since  2.2.0
      */
-    public const DOWNLOAD_SECONDS = 15;
+    private const DOWNLOAD_SECONDS = 15;
 
     /**
-     * Wall-clock seconds a page render may spend starting downloads.
+     * HTTP timeout in seconds per photo.
      *
      * @since  2.2.0
      */
-    public const DOWNLOAD_SECONDS_FRONTEND = 3;
-
-    /**
-     * HTTP timeout in seconds for a refresh.
-     *
-     * @since  2.2.0
-     */
-    public const HTTP_TIMEOUT = 10;
-
-    /**
-     * HTTP timeout in seconds while rendering a page.
-     *
-     * @since  2.2.0
-     */
-    public const HTTP_TIMEOUT_FRONTEND = 3;
-
-    /**
-     * Seconds to wait before retrying a photo that failed to download.
-     *
-     * @since  2.2.0
-     */
-    private const RETRY_AFTER = 21600;
+    private const HTTP_TIMEOUT = 10;
 
     /**
      * Image directory relative to the site root.
@@ -138,10 +117,10 @@ class ImageCacheHelper
     /**
      * Make sure every review has a locally stored photo, downloading what is missing.
      *
-     * Reviews gain two keys: profile_photo_local (the bare filename to serve) and
-     * profile_photo_attempt (when a download was last tried, so a dead URL backs off).
-     * The original Google URL in profile_photo_url is left untouched — it is the cache
-     * key and the source to re-fetch from.
+     * Runs only while the reviews are being refreshed, so $raw always holds every
+     * cached review. Each review gains profile_photo_local, the bare filename to
+     * serve; the original Google URL in profile_photo_url is left untouched — it is
+     * the cache key and the source to re-fetch from.
      *
      * @param   int    $moduleId         Module record id.
      * @param   array  $raw              Raw cache payload.
@@ -149,14 +128,6 @@ class ImageCacheHelper
      *                                   may start; a download already under way is
      *                                   allowed to finish. Zero disables downloads.
      * @param   int    $timeout          HTTP timeout per download, in seconds.
-     * @param   bool   $isRefresh        True when the reviews are being refreshed,
-     *                                   which means $raw holds every cached review and
-     *                                   somebody asked for this: files no review
-     *                                   references are removed, and photos that failed
-     *                                   before are retried straight away. False while
-     *                                   rendering a page, where only part of the cache
-     *                                   is in hand and a failing photo must not be
-     *                                   retried on every request.
      *
      * @return  array  The payload with the photo keys applied.
      *
@@ -166,8 +137,7 @@ class ImageCacheHelper
         int $moduleId,
         array $raw,
         float $downloadSeconds = self::DOWNLOAD_SECONDS,
-        int $timeout = self::HTTP_TIMEOUT,
-        bool $isRefresh = true
+        int $timeout = self::HTTP_TIMEOUT
     ): array {
         if ($moduleId <= 0 || empty($raw['reviews']) || !\is_array($raw['reviews'])) {
             return $raw;
@@ -175,7 +145,6 @@ class ImageCacheHelper
 
         $dir      = $this->imageDir($moduleId);
         $deadline = $this->now() + $downloadSeconds;
-        $now      = time();
         $keep     = [];
 
         $this->lastRunPending = 0;
@@ -197,18 +166,13 @@ class ImageCacheHelper
             $file = $this->existingFile($dir, $hash);
 
             if ($file === null) {
-                $attempt = (int) ($review['profile_photo_attempt'] ?? 0);
-
-                if ($isRefresh || $now - $attempt > self::RETRY_AFTER) {
-                    if ($this->now() < $deadline) {
-                        $raw['reviews'][$key]['profile_photo_attempt'] = $now;
-                        $file                                          = $this->storePhoto($dir, $source, $hash, $timeout);
-                    } else {
-                        // Left for the next run purely because this one's time ran
-                        // out — the caller reports this, so whoever pressed the
-                        // button knows to press it again.
-                        $this->lastRunPending++;
-                    }
+                if ($this->now() < $deadline) {
+                    $file = $this->storePhoto($dir, $source, $hash, $timeout);
+                } else {
+                    // Left for the next run purely because this one's time ran out —
+                    // the caller reports this, so whoever pressed the button knows to
+                    // press it again.
+                    $this->lastRunPending++;
                 }
 
                 // Still nothing to show: fall back to an avatar built from the
@@ -225,19 +189,13 @@ class ImageCacheHelper
                 continue;
             }
 
-            // The attempt marker only exists to slow down retries, so it goes as soon
-            // as there is a real photo.
-            if (strncmp($file, 'initials-', 9) !== 0) {
-                unset($raw['reviews'][$key]['profile_photo_attempt']);
-            }
-
             $raw['reviews'][$key]['profile_photo_local'] = $file;
             $keep[$file]                                 = true;
         }
 
         // A run that ran out of time has not seen every photo it would keep, so
         // pruning then would delete files it simply never reached.
-        if ($isRefresh && $this->lastRunPending === 0) {
+        if ($this->lastRunPending === 0) {
             $this->pruneOrphans($dir, $keep);
         }
 

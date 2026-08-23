@@ -6,7 +6,7 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 
 - Display Google rating, review count, review text, author names, profile photos, star ratings, and a "View all reviews" link.
 - Optional "Leave a review" button that opens Google's review form for the configured Place ID.
-- Reviewer profile photos are stored on your own site and served from your own domain, so displaying the reviews sends no visitor data to Google. Reviewers whose photo is not stored yet get a locally generated avatar with their initials.
+- Reviewer profile photos are stored on your own site and served from your own domain, so displaying the reviews sends no visitor data to Google. Reviewers whose photo could not be downloaded get a locally generated avatar with their initials.
 - Choose from Bootstrap layouts (Default, Card Carousel, Compact), UIkit/YOOtheme layouts (UIkit Default, UIkit Compact, UIkit List), plus a simple List and a classic Legacy layout.
 - Set responsive column counts per breakpoint — 1 to 6 reviews side by side for mobile, tablet, desktop, and wide screens — in the carousel layouts.
 - Bootstrap layouts use a native CSS scroll-snap carousel: native touch swipe, one-column-at-a-time navigation, a usable scrollable fallback without JavaScript, and no inline styles (CSP-friendly). UIkit layouts use UIkit's native slider.
@@ -140,9 +140,10 @@ Use version 1.1.0 or newer of the task plugin with Pretty Reviews module 1.2.0 o
 Reviewer photos are never loaded from Google by your visitors' browsers. Each photo is downloaded once and
 stored under `media/mod_prettyreviews/images/{module_id}/`, and the layouts point at that copy.
 
-Photos are collected when the reviews are refreshed — the **Update Reviews** button, or the task plugin — and,
-for caches created before this feature existed, a few seconds' worth at a time as the module is displayed. Until a reviewer's
-photo has been stored, an avatar generated from their initials is shown, so no request ever leaves for Google.
+Photos are collected when the reviews are refreshed — the **Update Reviews** button, or the task plugin. A
+reviewer whose photo could not be downloaded gets an avatar generated from their initials instead, so no
+request ever leaves for Google. A cache created before this feature existed shows no reviewer photos until
+its next refresh; nothing is ever downloaded while a page is being viewed.
 
 Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB, and only after the downloaded
 bytes are confirmed to be a JPEG, PNG, GIF or WebP. Anything else is refused and the initials avatar is kept.
