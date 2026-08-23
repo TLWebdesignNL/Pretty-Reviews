@@ -165,6 +165,17 @@ check('the reviews it did not reach still show something', count(array_filter(
     $partial['reviews'],
     static fn ($one) => !empty($one['profile_photo_local'])
 )) === 6);
+check('it reports how many were left for the next run', $images->pendingDownloads() === 3);
+
+$images->syncReviewPhotos(7, $partial, 25, 10);
+check('a run that finishes reports nothing pending', $images->pendingDownloads() === 0);
+
+// A photo whose download fails is not "pending": pressing the button again straight
+// away would not help it, so it must not keep the message alive.
+respondWith(404, '');
+$images->syncReviewPhotos(7, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]], 25, 10);
+check('a failed download is not reported as pending', $images->pendingDownloads() === 0);
+respondWith(200, pngBytes());
 
 group('Pruning');
 $keeper = $partial['reviews'][800]['profile_photo_local'];

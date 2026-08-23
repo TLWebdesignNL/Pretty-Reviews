@@ -127,6 +127,14 @@ class ImageCacheHelper
     private const FILENAME_PATTERN = '/^(?:[0-9a-f]{32}\.(?:jpg|png|gif|webp)|initials-[0-9a-f]{32}\.svg)$/';
 
     /**
+     * How many photos the last sync left undownloaded because its budget ran out.
+     *
+     * @var    integer
+     * @since  2.2.0
+     */
+    private int $lastRunPending = 0;
+
+    /**
      * Make sure every review has a locally stored photo, downloading what is missing.
      *
      * Reviews gain two keys: profile_photo_local (the bare filename to serve) and
@@ -166,6 +174,8 @@ class ImageCacheHelper
         $now    = time();
         $keep   = [];
 
+        $this->lastRunPending = 0;
+
         foreach ($raw['reviews'] as $key => $review) {
             if (!\is_array($review)) {
                 continue;
@@ -189,6 +199,11 @@ class ImageCacheHelper
                     $budget--;
                     $raw['reviews'][$key]['profile_photo_attempt'] = $now;
                     $file                                          = $this->storePhoto($dir, $source, $hash, $timeout);
+                } elseif ($budget <= 0) {
+                    // Left for the next run purely because this one's budget ran out —
+                    // the caller reports this, so whoever pressed the button knows to
+                    // press it again.
+                    $this->lastRunPending++;
                 }
 
                 // Still nothing to show: fall back to an avatar built from the
@@ -222,6 +237,22 @@ class ImageCacheHelper
         }
 
         return $raw;
+    }
+
+    /**
+     * How many photos the last syncReviewPhotos() run had to leave undownloaded
+     * because its download budget ran out.
+     *
+     * Photos whose download was attempted and failed are not counted: running again
+     * straight away would not help those, and they are logged instead.
+     *
+     * @return  integer
+     *
+     * @since   2.2.0
+     */
+    public function pendingDownloads(): int
+    {
+        return $this->lastRunPending;
     }
 
     /**

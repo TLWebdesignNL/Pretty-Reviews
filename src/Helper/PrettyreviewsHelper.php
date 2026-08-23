@@ -40,13 +40,22 @@ class PrettyreviewsHelper
     /**
      * AJAX entry point — guarded by CSRF + per-module ACL, then refreshes from Google.
      *
-     * @return  bool
+     * Besides whether the refresh succeeded, the response carries how many reviewer
+     * photos were left for a later run because the download budget ran out, so the
+     * administrator knows to press the button again on a large backlog.
+     *
+     * @return  array  Keys: updated (bool), pendingPhotos (int).
      *
      * @since   1.2.0
      */
-    public function updateGoogleReviewsAjax(): bool
+    public function updateGoogleReviewsAjax(): array
     {
-        return $this->refreshFromGoogle($this->authorizeModuleRequest());
+        $updated = $this->refreshFromGoogle($this->authorizeModuleRequest());
+
+        return [
+            'updated'       => $updated,
+            'pendingPhotos' => $this->imageCache()->pendingDownloads(),
+        ];
     }
 
     /**

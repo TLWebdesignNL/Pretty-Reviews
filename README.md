@@ -121,6 +121,8 @@ The refresh action:
 - writes the raw review cache to `media/mod_prettyreviews/data-{module_id}.json`;
 - downloads any reviewer photos it does not have yet to `media/mod_prettyreviews/images/{module_id}/`, and
   removes the ones no cached review uses any more;
+- downloads at most 25 photos per run to keep the request quick, and reports in the success message how many
+  are still waiting, so you know to press the button again on a large cache;
 - returns clear feedback when Google rejects the API request.
 
 Save the module before the first refresh so Joomla has a module ID and stored credentials to use.
