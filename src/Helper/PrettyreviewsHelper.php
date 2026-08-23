@@ -41,7 +41,7 @@ class PrettyreviewsHelper
      * AJAX entry point — guarded by CSRF + per-module ACL, then refreshes from Google.
      *
      * Besides whether the refresh succeeded, the response carries how many reviewer
-     * photos were left for a later run because the download budget ran out, so the
+     * photos were left for a later run because the download time ran out, so the
      * administrator knows to press the button again on a large backlog.
      *
      * @return  array  Keys: updated (bool), pendingPhotos (int).
@@ -246,7 +246,7 @@ class PrettyreviewsHelper
      * Make sure the reviews about to be rendered have a locally stored photo.
      *
      * Reviews cached before this feature existed, and photos whose download failed,
-     * are backfilled here a few at a time so a page render stays quick. Anything that
+     * are backfilled here a few seconds' worth at a time so a page render stays quick. Anything that
      * goes wrong is swallowed: a site that cannot write to its media folder shows no
      * photos rather than an error.
      *
@@ -267,7 +267,7 @@ class PrettyreviewsHelper
             $synced = $this->imageCache()->syncReviewPhotos(
                 $moduleId,
                 ['reviews' => $reviews],
-                ImageCacheHelper::MAX_DOWNLOADS_FRONTEND,
+                ImageCacheHelper::DOWNLOAD_SECONDS_FRONTEND,
                 ImageCacheHelper::HTTP_TIMEOUT_FRONTEND,
                 // Not a refresh: these are only the reviews being displayed, so this run
                 // must neither decide which stored files are still in use nor retry a
@@ -363,7 +363,7 @@ class PrettyreviewsHelper
      *
      * @since   2.2.0
      */
-    private function imageCache(): ImageCacheHelper
+    protected function imageCache(): ImageCacheHelper
     {
         return $this->imageCache ??= new ImageCacheHelper();
     }

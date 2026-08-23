@@ -146,8 +146,25 @@ check('refuses to climb out of the module folder', $images->publicPhotoUrl(7, '.
 unlink($dir . '/evil.php');
 unlink(\dirname($dir) . '/escaped.png');
 
-group('Budgeting downloads');
-respondWith(200, pngBytes());
+group('Budgeting time, not photos');
+
+// A clock the test controls: each download costs six "seconds", so the default
+// fifteen-second budget fits exactly three of them.
+$metered = new class () extends ImageCacheHelper {
+    public $clock = 0.0;
+
+    protected function now(): float
+    {
+        return $this->clock;
+    }
+};
+
+\Joomla\CMS\Http\TestHttp::$handler = static function ($url) use ($metered) {
+    $metered->clock += 6.0;
+
+    return new \Joomla\CMS\Http\TestResponse(200, pngBytes());
+};
+
 $many = [];
 
 for ($i = 0; $i < 6; $i++) {
@@ -156,24 +173,40 @@ for ($i = 0; $i < 6; $i++) {
 
 resetRequests();
 $before  = Joomla\Filesystem\Folder::files($dir);
-$partial = $images->syncReviewPhotos(7, ['reviews' => $many], 3, 10);
+$partial = $metered->syncReviewPhotos(7, ['reviews' => $many]);
 $after   = Joomla\Filesystem\Folder::files($dir);
 
-check('only the allowed number are downloaded', count(requests()) === 3);
+check('downloads stop when the time is spent', count(requests()) === 3);
 check('a partial run deletes nothing', array_diff($before, $after) === []);
 check('the reviews it did not reach still show something', count(array_filter(
     $partial['reviews'],
     static fn ($one) => !empty($one['profile_photo_local'])
 )) === 6);
-check('it reports how many were left for the next run', $images->pendingDownloads() === 3);
+check('it reports how many were left for the next run', $metered->pendingDownloads() === 3);
 
-$images->syncReviewPhotos(7, $partial, 25, 10);
-check('a run that finishes reports nothing pending', $images->pendingDownloads() === 0);
+resetRequests();
+$partial = $metered->syncReviewPhotos(7, $partial);
+check('the next run picks up the remainder', count(requests()) === 3);
+check('a run that finishes reports nothing pending', $metered->pendingDownloads() === 0);
+
+// With nothing slowing the clock down, one run swallows a whole backlog: the point
+// of a time budget over a count is that a fast connection is not held back.
+respondWith(200, pngBytes());
+$burst = [];
+
+for ($i = 0; $i < 40; $i++) {
+    $burst[2000 + $i] = $review(2000 + $i, "Fast $i", $source . "f$i=s128-c");
+}
+
+resetRequests();
+$images->syncReviewPhotos(7, ['reviews' => $burst]);
+check('a fast connection fills a large cache in one run', count(requests()) === 40);
+check('with nothing left pending', $images->pendingDownloads() === 0);
 
 // A photo whose download fails is not "pending": pressing the button again straight
 // away would not help it, so it must not keep the message alive.
 respondWith(404, '');
-$images->syncReviewPhotos(7, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]], 25, 10);
+$images->syncReviewPhotos(7, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]]);
 check('a failed download is not reported as pending', $images->pendingDownloads() === 0);
 respondWith(200, pngBytes());
 

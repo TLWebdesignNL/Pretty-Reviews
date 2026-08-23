@@ -16,6 +16,7 @@
 
 require_once __DIR__ . '/bootstrap.php';
 
+use TLWeb\Module\Prettyreviews\Site\Helper\ImageCacheHelper;
 use TLWeb\Module\Prettyreviews\Site\Helper\PrettyreviewsHelper;
 
 $source = 'https://lh3.googleusercontent.com/a/AAcHT';
@@ -70,6 +71,38 @@ check('a second render leaves the google url alone', $onDisk['reviews'][100]['pr
 check('and never writes a local url into the cache', !str_contains(file_get_contents($cache(7)), 'example.test'));
 
 group('Keeping the page quick');
+
+// A render may spend three seconds starting downloads. On this clock every download
+// costs two, so a render manages two photos and leaves the rest for the next one.
+$meteredCache = new class () extends ImageCacheHelper {
+    public $clock = 0.0;
+
+    protected function now(): float
+    {
+        return $this->clock;
+    }
+};
+
+$slowHelper = new class ($meteredCache) extends PrettyreviewsHelper {
+    private $meteredCache;
+
+    public function __construct(ImageCacheHelper $meteredCache)
+    {
+        $this->meteredCache = $meteredCache;
+    }
+
+    protected function imageCache(): ImageCacheHelper
+    {
+        return $this->meteredCache;
+    }
+};
+
+\Joomla\CMS\Http\TestHttp::$handler = static function ($url) use ($meteredCache) {
+    $meteredCache->clock += 2.0;
+
+    return new \Joomla\CMS\Http\TestResponse(200, pngBytes());
+};
+
 $many = [];
 
 for ($i = 0; $i < 6; $i++) {
@@ -78,25 +111,28 @@ for ($i = 0; $i < 6; $i++) {
 
 file_put_contents($cache(8), json_encode(['reviews' => $many]));
 resetRequests();
-$rendered = $helper->ensureLocalPhotos(8, $many);
+$rendered = $slowHelper->ensureLocalPhotos(8, $many);
 
-check('only a few photos are fetched per render', count(requests()) === 3);
+check('a render stops fetching when its time is spent', count(requests()) === 2);
 check('a short timeout is used', requests()[0]['timeout'] === 3);
 check('every review still has something to show', count(array_filter($rendered, static fn ($r) => !empty($r['profile_photo_local']))) === 6);
-check('the rest fall back to initials', count(array_filter($rendered, static fn ($r) => str_starts_with($r['profile_photo_local'], 'initials-'))) === 3);
+check('the rest fall back to initials', count(array_filter($rendered, static fn ($r) => str_starts_with($r['profile_photo_local'], 'initials-'))) === 4);
 
 resetRequests();
-$helper->ensureLocalPhotos(8, $read(8));
-check('the next render picks up where it left off', count(requests()) === 3);
-check('after which every photo is stored', count(glob($dir(8) . '/*.png')) === 6);
-check('and every review uses one', count(array_filter($read(8), static fn ($r) => str_ends_with($r['profile_photo_local'], '.png'))) === 6);
+$slowHelper->ensureLocalPhotos(8, $read(8));
+check('the next render picks up where it left off', count(requests()) === 2);
 
 resetRequests();
-$helper->ensureLocalPhotos(8, $read(8));
+$slowHelper->ensureLocalPhotos(8, $read(8));
+check('and the one after finishes the job', count(glob($dir(8) . '/*.png')) === 6);
+check('every review now uses a stored photo', count(array_filter($read(8), static fn ($r) => str_ends_with($r['profile_photo_local'], '.png'))) === 6);
+
+resetRequests();
+$slowHelper->ensureLocalPhotos(8, $read(8));
 check('a settled cache downloads nothing at all', requests() === []);
 
 group('Leaving the cleaning up to a refresh');
-check('the superseded initials are still there', count(glob($dir(8) . '/initials-*.svg')) === 3);
+check('the superseded initials are still there', count(glob($dir(8) . '/initials-*.svg')) === 4);
 
 // A render only ever sees the reviews that survived present(), so it must not decide
 // that the others' photos are unused.

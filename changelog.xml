@@ -9,7 +9,7 @@
         </addition>
         <change>
             <item>Photos are stored per module under media/mod_prettyreviews/images/, and are removed together with the reviews when a module is purged. Photos belonging to reviews that are no longer cached are cleaned up automatically.</item>
-            <item>To keep the Update Reviews button responsive, at most 25 photos are downloaded per update. When a large cache leaves photos waiting, the message after the update says how many, so you know to press the button again.</item>
+            <item>To keep the Update Reviews button responsive, an update spends at most about fifteen seconds downloading photos: a fast connection fills a large cache in one go, a slow one leaves the remainder for the next update. When photos are left waiting, the message after the update says how many, so you know to press the button again.</item>
         </change>
         <note>
             <item>Existing modules keep working unchanged. Their photos are collected gradually as the module is displayed; pressing Fetch Google Reviews (or running the Pretty Reviews task plugin) stores them all at once.</item>

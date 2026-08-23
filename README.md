@@ -121,8 +121,8 @@ The refresh action:
 - writes the raw review cache to `media/mod_prettyreviews/data-{module_id}.json`;
 - downloads any reviewer photos it does not have yet to `media/mod_prettyreviews/images/{module_id}/`, and
   removes the ones no cached review uses any more;
-- downloads at most 25 photos per run to keep the request quick, and reports in the success message how many
-  are still waiting, so you know to press the button again on a large cache;
+- spends at most about fifteen seconds downloading photos per run to keep the request quick, and reports in
+  the success message how many are still waiting, so you know to press the button again on a slow connection;
 - returns clear feedback when Google rejects the API request.
 
 Save the module before the first refresh so Joomla has a module ID and stored credentials to use.
@@ -141,7 +141,7 @@ Reviewer photos are never loaded from Google by your visitors' browsers. Each ph
 stored under `media/mod_prettyreviews/images/{module_id}/`, and the layouts point at that copy.
 
 Photos are collected when the reviews are refreshed — the **Update Reviews** button, or the task plugin — and,
-for caches created before this feature existed, a few at a time as the module is displayed. Until a reviewer's
+for caches created before this feature existed, a few seconds' worth at a time as the module is displayed. Until a reviewer's
 photo has been stored, an avatar generated from their initials is shown, so no request ever leaves for Google.
 
 Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB, and only after the downloaded

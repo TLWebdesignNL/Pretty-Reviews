@@ -56,19 +56,20 @@ class ImageCacheHelper
     private const MAX_DIMENSION = 4096;
 
     /**
-     * Downloads allowed per refresh, bounding the wall time of the administrator's
-     * AJAX call. A large cache backfills over successive runs.
+     * Wall-clock seconds a refresh may spend starting downloads, bounding the
+     * administrator's AJAX call. A fast connection fills a large cache in one run; a
+     * slow one leaves the remainder for the next, and the caller reports how many.
      *
      * @since  2.2.0
      */
-    public const MAX_DOWNLOADS_PER_RUN = 25;
+    public const DOWNLOAD_SECONDS = 15;
 
     /**
-     * Downloads allowed while rendering a page, bounding the request.
+     * Wall-clock seconds a page render may spend starting downloads.
      *
      * @since  2.2.0
      */
-    public const MAX_DOWNLOADS_FRONTEND = 3;
+    public const DOWNLOAD_SECONDS_FRONTEND = 3;
 
     /**
      * HTTP timeout in seconds for a refresh.
@@ -127,7 +128,7 @@ class ImageCacheHelper
     private const FILENAME_PATTERN = '/^(?:[0-9a-f]{32}\.(?:jpg|png|gif|webp)|initials-[0-9a-f]{32}\.svg)$/';
 
     /**
-     * How many photos the last sync left undownloaded because its budget ran out.
+     * How many photos the last sync left undownloaded because its time ran out.
      *
      * @var    integer
      * @since  2.2.0
@@ -142,17 +143,20 @@ class ImageCacheHelper
      * The original Google URL in profile_photo_url is left untouched — it is the cache
      * key and the source to re-fetch from.
      *
-     * @param   int    $moduleId      Module record id.
-     * @param   array  $raw           Raw cache payload.
-     * @param   int    $maxDownloads  Downloads allowed in this run.
-     * @param   int    $timeout       HTTP timeout per download, in seconds.
-     * @param   bool   $isRefresh     True when the reviews are being refreshed, which
-     *                                means $raw holds every cached review and somebody
-     *                                asked for this: files no review references are
-     *                                removed, and photos that failed before are retried
-     *                                straight away. False while rendering a page, where
-     *                                only part of the cache is in hand and a failing
-     *                                photo must not be retried on every request.
+     * @param   int    $moduleId         Module record id.
+     * @param   array  $raw              Raw cache payload.
+     * @param   float  $downloadSeconds  Wall-clock seconds during which new downloads
+     *                                   may start; a download already under way is
+     *                                   allowed to finish. Zero disables downloads.
+     * @param   int    $timeout          HTTP timeout per download, in seconds.
+     * @param   bool   $isRefresh        True when the reviews are being refreshed,
+     *                                   which means $raw holds every cached review and
+     *                                   somebody asked for this: files no review
+     *                                   references are removed, and photos that failed
+     *                                   before are retried straight away. False while
+     *                                   rendering a page, where only part of the cache
+     *                                   is in hand and a failing photo must not be
+     *                                   retried on every request.
      *
      * @return  array  The payload with the photo keys applied.
      *
@@ -161,7 +165,7 @@ class ImageCacheHelper
     public function syncReviewPhotos(
         int $moduleId,
         array $raw,
-        int $maxDownloads = self::MAX_DOWNLOADS_PER_RUN,
+        float $downloadSeconds = self::DOWNLOAD_SECONDS,
         int $timeout = self::HTTP_TIMEOUT,
         bool $isRefresh = true
     ): array {
@@ -169,10 +173,10 @@ class ImageCacheHelper
             return $raw;
         }
 
-        $dir    = $this->imageDir($moduleId);
-        $budget = $maxDownloads;
-        $now    = time();
-        $keep   = [];
+        $dir      = $this->imageDir($moduleId);
+        $deadline = $this->now() + $downloadSeconds;
+        $now      = time();
+        $keep     = [];
 
         $this->lastRunPending = 0;
 
@@ -195,15 +199,16 @@ class ImageCacheHelper
             if ($file === null) {
                 $attempt = (int) ($review['profile_photo_attempt'] ?? 0);
 
-                if ($budget > 0 && ($isRefresh || $now - $attempt > self::RETRY_AFTER)) {
-                    $budget--;
-                    $raw['reviews'][$key]['profile_photo_attempt'] = $now;
-                    $file                                          = $this->storePhoto($dir, $source, $hash, $timeout);
-                } elseif ($budget <= 0) {
-                    // Left for the next run purely because this one's budget ran out —
-                    // the caller reports this, so whoever pressed the button knows to
-                    // press it again.
-                    $this->lastRunPending++;
+                if ($isRefresh || $now - $attempt > self::RETRY_AFTER) {
+                    if ($this->now() < $deadline) {
+                        $raw['reviews'][$key]['profile_photo_attempt'] = $now;
+                        $file                                          = $this->storePhoto($dir, $source, $hash, $timeout);
+                    } else {
+                        // Left for the next run purely because this one's time ran
+                        // out — the caller reports this, so whoever pressed the
+                        // button knows to press it again.
+                        $this->lastRunPending++;
+                    }
                 }
 
                 // Still nothing to show: fall back to an avatar built from the
@@ -230,9 +235,9 @@ class ImageCacheHelper
             $keep[$file]                                 = true;
         }
 
-        // A run that ran out of budget has not seen every photo it would keep, so
+        // A run that ran out of time has not seen every photo it would keep, so
         // pruning then would delete files it simply never reached.
-        if ($isRefresh && $budget > 0) {
+        if ($isRefresh && $this->lastRunPending === 0) {
             $this->pruneOrphans($dir, $keep);
         }
 
@@ -241,7 +246,7 @@ class ImageCacheHelper
 
     /**
      * How many photos the last syncReviewPhotos() run had to leave undownloaded
-     * because its download budget ran out.
+     * because its time ran out.
      *
      * Photos whose download was attempted and failed are not counted: running again
      * straight away would not help those, and they are logged instead.
@@ -313,6 +318,21 @@ class ImageCacheHelper
 
             return false;
         }
+    }
+
+    /**
+     * The clock the download deadline is measured against.
+     *
+     * A method of its own so the tests can supply a clock they control; everything
+     * else uses it through the deadline only.
+     *
+     * @return  float  Seconds, as microtime(true) returns them.
+     *
+     * @since   2.2.0
+     */
+    protected function now(): float
+    {
+        return microtime(true);
     }
 
     /**
