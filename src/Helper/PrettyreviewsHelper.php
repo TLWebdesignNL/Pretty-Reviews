@@ -333,14 +333,14 @@ class PrettyreviewsHelper
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_REQUEST_FAILED'), 502, $e);
         }
 
-        if ((int) $response->code !== 200) {
+        if ((int) $response->getStatusCode() !== 200) {
             throw new \RuntimeException(
-                Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', (int) $response->code),
+                Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', (int) $response->getStatusCode()),
                 502
             );
         }
 
-        $decoded = json_decode((string) $response->body);
+        $decoded = json_decode((string) $response->getBody());
 
         if (!$decoded instanceof \stdClass) {
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_INVALID_RESPONSE'), 502);

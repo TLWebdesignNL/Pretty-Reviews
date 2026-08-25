@@ -44,7 +44,7 @@ check('one size is requested for every avatar', str_ends_with(requests()[0]['url
 check(
     'the photo is served from this site',
     $images->publicPhotoUrl(7, $stored['reviews'][100]['profile_photo_local'])
-        === 'https://example.test/media/mod_prettyreviews/images/7/' . $stored['reviews'][100]['profile_photo_local']
+        === '/media/mod_prettyreviews/images/7/' . $stored['reviews'][100]['profile_photo_local']
 );
 check('no initials avatar is written when the download works', glob($dir . '/initials-*.svg') === []);
 
@@ -226,6 +226,91 @@ $images->syncReviewPhotos(76, ['reviews' => [910 => $review(910, 'Other Url', $s
 check('a url that normalises to something else is retried as it came', count(requests()) === 2);
 
 respondWith(200, pngBytes());
+
+group('Redirects');
+
+// Joomla's transports follow redirects themselves by default, which would put only the
+// first url through the host check. The module turns that off and walks the chain here,
+// so every hop is checked before it is requested.
+$redirect = static function (string $to): callable {
+    return static function ($url) use ($to) {
+        return str_contains($url, 'hop')
+            ? new \Joomla\CMS\Http\TestResponse(200, pngBytes())
+            : new \Joomla\CMS\Http\TestResponse(302, '', ['Location' => $to]);
+    };
+};
+
+\Joomla\CMS\Http\TestHttp::$handler = $redirect('https://lh3.googleusercontent.com/hop.png');
+resetRequests();
+$followed = $images->syncReviewPhotos(77, ['reviews' => [1000 => $review(1000, 'Redirected', $source . 'r1=s1')]]);
+
+check('a redirect within the allowed hosts is followed', str_ends_with($followed['reviews'][1000]['profile_photo_local'], '.png'));
+check('the transport was told not to chase it itself', count(requests()) === 2);
+check('and the hop was requested by us', requests()[1]['url'] === 'https://lh3.googleusercontent.com/hop.png');
+
+\Joomla\CMS\Http\TestHttp::$handler = $redirect('https://evil.test/hop.png');
+resetRequests();
+$offsite = $images->syncReviewPhotos(78, ['reviews' => [1010 => $review(1010, 'Sent Away', $source . 'r2=s1')]]);
+
+check('a redirect off the allowed hosts is refused', str_starts_with($offsite['reviews'][1010]['profile_photo_local'], 'initials-'));
+check('and the offsite hop is never requested', array_filter(
+    requests(),
+    static fn ($one) => str_contains($one['url'], 'evil.test')
+) === []);
+
+// Relative forms resolve against the url they came from; the result is checked like
+// any other hop.
+\Joomla\CMS\Http\TestHttp::$handler = $redirect('/hop.png');
+resetRequests();
+$relative = $images->syncReviewPhotos(79, ['reviews' => [1020 => $review(1020, 'Root Relative', $source . 'r3=s1')]]);
+
+check('a root-relative redirect is resolved against its host', requests()[1]['url'] === 'https://lh3.googleusercontent.com/hop.png');
+check('and it is followed', str_ends_with($relative['reviews'][1020]['profile_photo_local'], '.png'));
+
+\Joomla\CMS\Http\TestHttp::$handler = static fn ($url) => new \Joomla\CMS\Http\TestResponse(302, '', ['Location' => $source . 'loop=s1']);
+resetRequests();
+$looping = $images->syncReviewPhotos(80, ['reviews' => [1030 => $review(1030, 'Round And Round', $source . 'r4=s1')]]);
+
+check('a redirect loop is given up on', str_starts_with($looping['reviews'][1030]['profile_photo_local'], 'initials-'));
+check('after a bounded number of hops', count(requests()) === 8);
+
+respondWith(200, pngBytes());
+
+group('Backing off a photo that keeps failing');
+
+$failing = JPATH_ROOT . '/media/mod_prettyreviews/images/81';
+$dead    = ['reviews' => [1100 => $review(1100, 'Never Works', $source . 'x9=s1')]];
+
+respondWith(404, '');
+resetRequests();
+$images->syncReviewPhotos(81, $dead);
+check('the first failure is recorded', count(glob($failing . '/failed-*.txt')) === 1);
+check('and it took the requests to find out', count(requests()) === 2);
+
+// One failure is never enough to give up: a refresh that could not reach Google at all
+// has to heal the moment someone presses the button again.
+resetRequests();
+$images->syncReviewPhotos(81, $dead);
+check('the second run tries again anyway', count(requests()) === 2);
+
+resetRequests();
+$images->syncReviewPhotos(81, $dead);
+check('the third run leaves it alone', requests() === []);
+check('the reviewer still has an avatar', is_file($failing . '/' . $images->syncReviewPhotos(81, $dead)['reviews'][1100]['profile_photo_local']));
+
+// The marker is not a photo, so it must never be handed to a visitor.
+$marker = basename(glob($failing . '/failed-*.txt')[0]);
+check('a marker is never served', $images->publicPhotoUrl(81, $marker) === '');
+
+// Once the window is behind it, the photo is worth another go.
+touch(glob($failing . '/failed-*.txt')[0], time() - 7200);
+respondWith(200, pngBytes());
+resetRequests();
+$recovered = $images->syncReviewPhotos(81, $dead);
+
+check('once the window passes it is tried again', count(requests()) === 1);
+check('and the photo replaces the initials avatar', str_ends_with($recovered['reviews'][1100]['profile_photo_local'], '.png'));
+check('the marker is cleaned up with it', glob($failing . '/failed-*.txt') === []);
 
 group('Pruning');
 $keeper = $partial['reviews'][800]['profile_photo_local'];

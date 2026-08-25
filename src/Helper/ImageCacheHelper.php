@@ -83,6 +83,31 @@ class ImageCacheHelper
     private const MIN_TIMEOUT = 1;
 
     /**
+     * Redirects a download may follow before it is given up on.
+     *
+     * @since  2.2.0
+     */
+    private const MAX_REDIRECTS = 3;
+
+    /**
+     * Failures in a row before a photo is left alone for a while. The first failure is
+     * always retried on the next run, so a refresh that could not reach Google at all
+     * heals as soon as someone presses the button again.
+     *
+     * @since  2.2.0
+     */
+    private const FAILURES_BEFORE_BACKOFF = 2;
+
+    /**
+     * How long a photo that keeps failing is left alone, in seconds. Without this a url
+     * that is never coming back spends part of every refresh's budget, crowding out the
+     * photos that would have worked.
+     *
+     * @since  2.2.0
+     */
+    private const FAILED_RETRY_SECONDS = 3600;
+
+    /**
      * Image directory relative to the site root.
      *
      * @since  2.2.0
@@ -110,12 +135,20 @@ class ImageCacheHelper
     ];
 
     /**
-     * Every filename this class creates. Also used to validate names read back from
-     * the cache file, and to make sure pruning only ever removes our own files.
+     * Every filename this class creates, the failure markers included. Pruning uses it,
+     * so that it only ever removes our own files.
      *
      * @since  2.2.0
      */
-    private const FILENAME_PATTERN = '/^(?:[0-9a-f]{32}\.(?:jpg|png|gif|webp)|initials-[0-9a-f]{32}\.svg)$/';
+    private const OWN_FILE_PATTERN = '/^(?:[0-9a-f]{32}\.(?:jpg|png|gif|webp)|initials-[0-9a-f]{32}\.svg|failed-[0-9a-f]{32}\.txt)$/';
+
+    /**
+     * The filenames that may be served to a visitor: the images, and nothing else. The
+     * markers are deliberately absent — they are bookkeeping, not something to hand out.
+     *
+     * @since  2.2.0
+     */
+    private const SERVED_PATTERN = '/^(?:[0-9a-f]{32}\.(?:jpg|png|gif|webp)|initials-[0-9a-f]{32}\.svg)$/';
 
     /**
      * How many photos the last sync left undownloaded because its time ran out.
@@ -174,17 +207,29 @@ class ImageCacheHelper
                 continue;
             }
 
-            $hash = $this->sourceHash($source);
-            $file = $this->existingFile($dir, $hash);
+            $hash   = $this->sourceHash($source);
+            $marker = $this->failureMarker($hash);
+            $file   = $this->existingFile($dir, $hash);
 
             if ($file === null) {
-                if ($this->now() < $deadline) {
+                if ($this->backingOff($dir, $marker)) {
+                    // Failed more than once already and too recently to be worth another
+                    // go. The marker is kept so the next run can still time the retry.
+                    $keep[$marker] = true;
+                } elseif ($this->now() < $deadline) {
                     $file = $this->storePhoto($dir, $source, $hash, $deadline, $timeout);
+
+                    if ($file === null) {
+                        $this->rememberFailure($dir, $marker);
+                        $keep[$marker] = true;
+                    }
                 } else {
                     // Left for the next run purely because this one's time ran out —
                     // the caller reports this, so whoever pressed the button knows to
-                    // press it again.
+                    // press it again. What is already known about the photo has to
+                    // outlive the prune below.
                     $this->lastRunPending++;
+                    $keep[$marker] = true;
                 }
 
                 // Still nothing to show: fall back to an avatar built from the
@@ -236,11 +281,14 @@ class ImageCacheHelper
      * The filename is re-validated here rather than trusted, because it is read back
      * from a file on disk that an administrator (or a compromised account) can edit.
      *
+     * The URL is root-relative, so it keeps working whichever of a site's domains — or
+     * which protocol — the page happens to be served from.
+     *
      * @param   int     $moduleId  Module record id.
      * @param   string  $file      Filename as stored in profile_photo_local.
      *
-     * @return  string  Absolute URL on this site, or an empty string when there is
-     *                  nothing valid to serve.
+     * @return  string  URL on this site, or an empty string when there is nothing valid
+     *                  to serve.
      *
      * @since   2.2.0
      */
@@ -249,13 +297,13 @@ class ImageCacheHelper
         if (
             $moduleId <= 0
             || $file === ''
-            || preg_match(self::FILENAME_PATTERN, $file) !== 1
+            || preg_match(self::SERVED_PATTERN, $file) !== 1
             || !is_file($this->imageDir($moduleId) . '/' . $file)
         ) {
             return '';
         }
 
-        return Uri::root() . self::MEDIA_PATH . '/' . $moduleId . '/' . $file;
+        return Uri::root(true) . '/' . self::MEDIA_PATH . '/' . $moduleId . '/' . $file;
     }
 
     /**
@@ -406,10 +454,7 @@ class ImageCacheHelper
 
         $name = $hash . '.' . $image['extension'];
 
-        // File::write() takes its buffer by reference, so it needs a variable.
-        $bytes = $image['bytes'];
-
-        if (!$this->createDirectory($dir) || !File::write($dir . '/' . $name, $bytes)) {
+        if (!$this->createDirectory($dir) || !$this->writeAtomically($dir . '/' . $name, $image['bytes'])) {
             $this->log('Could not store the profile photo ' . $name . ' in ' . $dir . '.');
 
             return null;
@@ -450,27 +495,21 @@ class ImageCacheHelper
      */
     private function fetchImage(string $url, int $timeout): ?array
     {
-        if (!$this->isAllowedSource($url)) {
-            $this->log('Refused a profile photo from an unexpected source: ' . $url);
+        $response = $this->request($url, $timeout);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $status = (int) $response->getStatusCode();
+
+        if ($status !== 200) {
+            $this->log('Downloading the profile photo ' . $url . ' returned HTTP status ' . $status . '.');
 
             return null;
         }
 
-        try {
-            $response = HttpFactory::getHttp()->get($url, [], $timeout);
-        } catch (\Throwable $e) {
-            $this->log('Could not download the profile photo ' . $url . ': ' . $e->getMessage());
-
-            return null;
-        }
-
-        if ((int) $response->code !== 200) {
-            $this->log('Downloading the profile photo ' . $url . ' returned HTTP status ' . (int) $response->code . '.');
-
-            return null;
-        }
-
-        $bytes = (string) $response->body;
+        $bytes = (string) $response->getBody();
 
         // Joomla's HTTP transports buffer the whole body, so the size is checked here
         // rather than trusting a Content-Length header.
@@ -496,6 +535,104 @@ class ImageCacheHelper
         }
 
         return ['extension' => self::ALLOWED_TYPES[$info[2]], 'bytes' => $bytes];
+    }
+
+    /**
+     * Fetch a URL, following any redirects here rather than in the transport.
+     *
+     * Joomla's HTTP transports follow redirects themselves by default, which would put
+     * only the first URL through isAllowedSource() and none of the hops after it. Doing
+     * it here means every hop is checked before it is requested.
+     *
+     * @param   string  $url      Absolute URL to fetch.
+     * @param   int     $timeout  HTTP timeout in seconds.
+     *
+     * @return  object|null  The response, or null when there is nothing to read.
+     *
+     * @since   2.2.0
+     */
+    private function request(string $url, int $timeout): ?object
+    {
+        for ($hop = 0; $hop <= self::MAX_REDIRECTS; $hop++) {
+            if (!$this->isAllowedSource($url)) {
+                $this->log('Refused a profile photo from an unexpected source: ' . $url);
+
+                return null;
+            }
+
+            try {
+                $response = HttpFactory::getHttp(['follow_location' => false])->get($url, [], $timeout);
+            } catch (\Throwable $e) {
+                $this->log('Could not download the profile photo ' . $url . ': ' . $e->getMessage());
+
+                return null;
+            }
+
+            $status = (int) $response->getStatusCode();
+
+            if (!\in_array($status, [301, 302, 303, 307, 308], true)) {
+                return $response;
+            }
+
+            $target = $this->resolveLocation($url, (string) $response->getHeaderLine('location'));
+
+            if ($target === null) {
+                $this->log('The profile photo ' . $url . ' redirected somewhere that cannot be followed.');
+
+                return null;
+            }
+
+            $url = $target;
+        }
+
+        $this->log('Gave up on the profile photo ' . $url . ': too many redirects.');
+
+        return null;
+    }
+
+    /**
+     * Work out where a Location header points.
+     *
+     * Absolute and host-relative forms are resolved; a relative path, which would need
+     * the segment rules of RFC 3986 to get right, is refused rather than guessed at. In
+     * every case the result goes back through isAllowedSource() before it is requested.
+     *
+     * @param   string  $from      URL the redirect came from.
+     * @param   string  $location  Location header as received.
+     *
+     * @return  string|null  Absolute URL, or null when it cannot be resolved.
+     *
+     * @since   2.2.0
+     */
+    private function resolveLocation(string $from, string $location): ?string
+    {
+        $location = trim($location);
+
+        if ($location === '') {
+            return null;
+        }
+
+        if (preg_match('#^[a-z][a-z0-9+.\-]*://#i', $location) === 1) {
+            return $location;
+        }
+
+        $parts = parse_url($from);
+
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return null;
+        }
+
+        // Scheme-relative: //host/path
+        if (strncmp($location, '//', 2) === 0) {
+            return $parts['scheme'] . ':' . $location;
+        }
+
+        // Root-relative: /path
+        if (strncmp($location, '/', 1) === 0) {
+            return $parts['scheme'] . '://' . $parts['host'] . $location;
+        }
+
+        return null;
     }
 
     /**
@@ -579,7 +716,7 @@ class ImageCacheHelper
                 . ' fill="#ffffff">' . $initials . '</text>')
             . '</svg>';
 
-        if (!$this->createDirectory($dir) || !File::write($name, $svg)) {
+        if (!$this->createDirectory($dir) || !$this->writeAtomically($name, $svg)) {
             $this->log('Could not write the initials avatar ' . $name . '.');
 
             return null;
@@ -614,12 +751,104 @@ class ImageCacheHelper
         }
 
         foreach ($files as $file) {
-            if (isset($keep[$file]) || preg_match(self::FILENAME_PATTERN, $file) !== 1) {
+            if (isset($keep[$file]) || preg_match(self::OWN_FILE_PATTERN, $file) !== 1) {
                 continue;
             }
 
             File::delete($dir . '/' . $file);
         }
+    }
+
+    /**
+     * Name of the marker recording that a photo would not download.
+     *
+     * @param   string  $hash  Cache key.
+     *
+     * @return  string
+     *
+     * @since   2.2.0
+     */
+    private function failureMarker(string $hash): string
+    {
+        return 'failed-' . $hash . '.txt';
+    }
+
+    /**
+     * Whether a photo has failed often enough, and recently enough, to be left alone.
+     *
+     * @param   string  $dir     Module image directory.
+     * @param   string  $marker  Marker filename.
+     *
+     * @return  bool
+     *
+     * @since   2.2.0
+     */
+    private function backingOff(string $dir, string $marker): bool
+    {
+        $path = $dir . '/' . $marker;
+
+        if (!is_file($path) || (int) @file_get_contents($path) < self::FAILURES_BEFORE_BACKOFF) {
+            return false;
+        }
+
+        // Wall-clock rather than now(): that clock measures the run's own budget, while
+        // this is about how long ago some earlier run gave up.
+        return (int) @filemtime($path) + self::FAILED_RETRY_SECONDS > time();
+    }
+
+    /**
+     * Record that a photo would not download, counting the attempts so far.
+     *
+     * A marker is only ever kept while the review that needs it is still cached: it is
+     * left out of the keep list as soon as the photo is stored, so pruning removes it.
+     *
+     * @param   string  $dir     Module image directory.
+     * @param   string  $marker  Marker filename.
+     *
+     * @return  void
+     *
+     * @since   2.2.0
+     */
+    private function rememberFailure(string $dir, string $marker): void
+    {
+        $path     = $dir . '/' . $marker;
+        $attempts = is_file($path) ? (int) @file_get_contents($path) : 0;
+
+        if ($this->createDirectory($dir)) {
+            $this->writeAtomically($path, (string) ($attempts + 1));
+        }
+    }
+
+    /**
+     * Write a file so that it never exists half-written.
+     *
+     * Everything here is read back by name and served, so a file interrupted mid-write
+     * would be a broken image that is_file() is perfectly happy with. Writing beside the
+     * target and renaming means the name only ever appears once the contents are whole.
+     *
+     * @param   string  $path      Absolute path to write.
+     * @param   string  $contents  What to write.
+     *
+     * @return  bool
+     *
+     * @since   2.2.0
+     */
+    private function writeAtomically(string $path, string $contents): bool
+    {
+        $temporary = $path . '.' . getmypid() . '.tmp';
+
+        if (!File::write($temporary, $contents)) {
+            return false;
+        }
+
+        if (!@rename($temporary, $path)) {
+            $this->log('Could not put the downloaded file in place at ' . $path . '.');
+            File::delete($temporary);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -653,8 +882,7 @@ class ImageCacheHelper
 
         // Not being able to write it is no reason to refuse the folder: the photos are
         // what matter, and a failure here reappears when the first one is written.
-        $blank = '';
-        File::write($dir . '/index.html', $blank);
+        $this->writeAtomically($dir . '/index.html', '');
 
         return true;
     }

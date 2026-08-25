@@ -65,8 +65,8 @@ foreach ($reviews as $key => $review) {
     $reviews[$key]['profile_photo_url'] = $helper->localPhotoUrl(7, $review);
 }
 
-check('the rendered url points at this site', str_starts_with($reviews[100]['profile_photo_url'], 'https://example.test/media/mod_prettyreviews/images/7/'));
-check('and the layouts will accept it', preg_match('#^https?://#i', $reviews[200]['profile_photo_url']) === 1);
+check('the rendered url points at this site', str_starts_with($reviews[100]['profile_photo_url'], '/media/mod_prettyreviews/images/7/'));
+check('and it is root-relative, so any of the site\'s domains serves it', preg_match('#^/[^/]#', $reviews[200]['profile_photo_url']) === 1);
 
 $onDisk = json_decode(file_get_contents($cache(7)), true);
 check('the google url is still there to re-fetch from', $onDisk['reviews'][100]['profile_photo_url'] === $source . '1=s128-c');

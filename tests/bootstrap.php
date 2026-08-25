@@ -192,7 +192,9 @@ namespace Joomla\CMS\Uri {
     {
         public static function root($pathonly = false)
         {
-            return 'https://example.test/';
+            // The test site lives at the domain root, so the path-only form is empty --
+            // exactly the case a helper that forgets the leading slash gets wrong.
+            return $pathonly ? '' : 'https://example.test/';
         }
     }
 }
@@ -218,18 +220,56 @@ namespace Joomla\CMS\Log {
 namespace Joomla\CMS\Http {
 
     /**
-     * Stands in for a Joomla HTTP response.
+     * Stands in for the body of a Joomla HTTP response, which is a PSR-7 stream.
+     */
+    class TestStream
+    {
+        private $contents;
+
+        public function __construct(string $contents)
+        {
+            $this->contents = $contents;
+        }
+
+        public function __toString(): string
+        {
+            return $this->contents;
+        }
+    }
+
+    /**
+     * Stands in for a Joomla HTTP response. Joomla 4 and up returns a PSR-7 response, so
+     * the accessors are the ones the module is allowed to use -- the ->code and ->body
+     * properties it used to reach for are a shim deprecated in Joomla 6.
      */
     class TestResponse
     {
-        public $code;
+        private $code;
 
-        public $body;
+        private $body;
 
-        public function __construct(int $code, string $body)
+        private $headers;
+
+        public function __construct(int $code, string $body, array $headers = [])
         {
-            $this->code = $code;
-            $this->body = $body;
+            $this->code    = $code;
+            $this->body    = $body;
+            $this->headers = array_change_key_case($headers);
+        }
+
+        public function getStatusCode()
+        {
+            return $this->code;
+        }
+
+        public function getBody()
+        {
+            return new TestStream($this->body);
+        }
+
+        public function getHeaderLine($name)
+        {
+            return $this->headers[strtolower($name)] ?? '';
         }
     }
 
