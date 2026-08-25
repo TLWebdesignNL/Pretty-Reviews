@@ -37,6 +37,7 @@ $stored = $images->syncReviewPhotos(7, ['reviews' => [
 ]]);
 
 check('a file is stored per reviewer', count(glob($dir . '/*.png')) === 2);
+check('the folder it made is not browsable', is_file($dir . '/index.html'));
 check('the review points at it', preg_match('/^[0-9a-f]{32}\.png$/', $stored['reviews'][100]['profile_photo_local']) === 1);
 check('the google url is left untouched', $stored['reviews'][100]['profile_photo_url'] === $source . '1=s128-c-rp-mo');
 check('one size is requested for every avatar', str_ends_with(requests()[0]['url'], '=s256-c'));
@@ -166,12 +167,22 @@ for ($i = 0; $i < 6; $i++) {
 }
 
 resetRequests();
-$before  = Joomla\Filesystem\Folder::files($dir);
 $partial = $metered->syncReviewPhotos(7, ['reviews' => $many]);
 $after   = Joomla\Filesystem\Folder::files($dir);
+$wanted  = array_column($partial['reviews'], 'profile_photo_local');
 
 check('downloads stop when the time is spent', count(requests()) === 3);
-check('a partial run deletes nothing', array_diff($before, $after) === []);
+
+// Nine seconds left, then three: a download is given what the budget has left rather
+// than the full timeout, so the run cannot overshoot by a whole request.
+check('each download gets only the time that is left', array_column(requests(), 'timeout') === [10, 9, 3]);
+
+check('a partial run keeps everything the payload points at', array_diff($wanted, $after) === []);
+
+// Running out of time skips a download, not an iteration, so a partial run has still
+// seen every review: what none of them points at is an orphan either way.
+check('a partial run still prunes what nothing points at', array_diff($after, $wanted, ['index.html']) === []);
+
 check('the reviews it did not reach still show something', count(array_filter(
     $partial['reviews'],
     static fn ($one) => !empty($one['profile_photo_local'])
@@ -202,12 +213,27 @@ check('with nothing left pending', $images->pendingDownloads() === 0);
 respondWith(404, '');
 $images->syncReviewPhotos(74, ['reviews' => [850 => $review(850, 'Dead Url', $source . 'dead=s1')]]);
 check('a failed download is not reported as pending', $images->pendingDownloads() === 0);
+
+// The retry exists in case Google changes its sizing syntax, so it is worth nothing
+// when normalising left the url alone -- and an identical second request would spend
+// the budget twice over.
+resetRequests();
+$images->syncReviewPhotos(75, ['reviews' => [900 => $review(900, 'Same Url', $source . 'n=s256-c')]]);
+check('a url that normalises to itself is not requested twice', count(requests()) === 1);
+
+resetRequests();
+$images->syncReviewPhotos(76, ['reviews' => [910 => $review(910, 'Other Url', $source . 'o=s128-c')]]);
+check('a url that normalises to something else is retried as it came', count(requests()) === 2);
+
 respondWith(200, pngBytes());
 
 group('Pruning');
 $keeper = $partial['reviews'][800]['profile_photo_local'];
 $images->syncReviewPhotos(7, ['reviews' => [800 => $partial['reviews'][800]]]);
-check('a full run keeps only what is still referenced', Joomla\Filesystem\Folder::files($dir) === [$keeper]);
+check('a full run keeps only what is still referenced', array_values(array_diff(
+    Joomla\Filesystem\Folder::files($dir),
+    ['index.html']
+)) === [$keeper]);
 
 file_put_contents($dir . '/.htaccess', 'x');
 file_put_contents($dir . '/index.html', '');

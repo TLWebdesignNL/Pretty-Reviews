@@ -56,20 +56,31 @@ class ImageCacheHelper
     private const MAX_DIMENSION = 4096;
 
     /**
-     * Wall-clock seconds a refresh may spend starting downloads, bounding the
-     * administrator's AJAX call. A fast connection fills a large cache in one run; a
-     * slow one leaves the remainder for the next, and the caller reports how many.
+     * Wall-clock seconds a refresh may spend downloading, bounding the administrator's
+     * AJAX call. A fast connection fills a large cache in one run; a slow one leaves the
+     * remainder for the next, and the caller reports how many.
      *
      * @since  2.2.0
      */
     private const DOWNLOAD_SECONDS = 15;
 
     /**
-     * HTTP timeout in seconds per photo.
+     * Longest HTTP timeout in seconds a photo may be given. A download close to the
+     * deadline gets less, so the budget above is a ceiling on the whole run rather than
+     * on the moment the last download starts.
      *
      * @since  2.2.0
      */
     private const HTTP_TIMEOUT = 10;
+
+    /**
+     * Shortest HTTP timeout in seconds a photo may be given. Joomla hands the value
+     * straight to the transport, where zero means "no timeout at all", so the last
+     * sliver of the budget still has to round up to a real limit.
+     *
+     * @since  2.2.0
+     */
+    private const MIN_TIMEOUT = 1;
 
     /**
      * Image directory relative to the site root.
@@ -124,10 +135,11 @@ class ImageCacheHelper
      *
      * @param   int    $moduleId         Module record id.
      * @param   array  $raw              Raw cache payload.
-     * @param   float  $downloadSeconds  Wall-clock seconds during which new downloads
-     *                                   may start; a download already under way is
-     *                                   allowed to finish. Zero disables downloads.
-     * @param   int    $timeout          HTTP timeout per download, in seconds.
+     * @param   float  $downloadSeconds  Wall-clock seconds the run may spend
+     *                                   downloading. Each download's timeout is trimmed
+     *                                   to what is left, so the run overshoots by at
+     *                                   most MIN_TIMEOUT. Zero disables downloads.
+     * @param   int    $timeout          Longest HTTP timeout per download, in seconds.
      *
      * @return  array  The payload with the photo keys applied.
      *
@@ -167,7 +179,7 @@ class ImageCacheHelper
 
             if ($file === null) {
                 if ($this->now() < $deadline) {
-                    $file = $this->storePhoto($dir, $source, $hash, $timeout);
+                    $file = $this->storePhoto($dir, $source, $hash, $deadline, $timeout);
                 } else {
                     // Left for the next run purely because this one's time ran out —
                     // the caller reports this, so whoever pressed the button knows to
@@ -193,11 +205,11 @@ class ImageCacheHelper
             $keep[$file]                                 = true;
         }
 
-        // A run that ran out of time has not seen every photo it would keep, so
-        // pruning then would delete files it simply never reached.
-        if ($this->lastRunPending === 0) {
-            $this->pruneOrphans($dir, $keep);
-        }
+        // Safe after a partial run too. The payload always holds every cached review and
+        // the loop above visited all of them — running out of time skips a download, not
+        // an iteration — so $keep names every file on disk that is still referenced. A
+        // photo the run never reached is not on disk yet, so there is nothing to lose.
+        $this->pruneOrphans($dir, $keep);
 
         return $raw;
     }
@@ -369,17 +381,24 @@ class ImageCacheHelper
      * @param   string  $dir        Module image directory.
      * @param   string  $sourceUrl  Photo URL as supplied by Google.
      * @param   string  $hash       Cache key.
-     * @param   int     $timeout    HTTP timeout in seconds.
+     * @param   float   $deadline   Point in time the run's download budget expires.
+     * @param   int     $timeout    Longest HTTP timeout in seconds.
      *
      * @return  string|null  Filename, or null when the photo could not be stored.
      *
      * @since   2.2.0
      */
-    private function storePhoto(string $dir, string $sourceUrl, string $hash, int $timeout): ?string
+    private function storePhoto(string $dir, string $sourceUrl, string $hash, float $deadline, int $timeout): ?string
     {
-        // Retry with the original URL in case Google ever changes its sizing syntax.
-        $image = $this->fetchImage($this->normalizeSourceUrl($sourceUrl), $timeout)
-            ?? $this->fetchImage($sourceUrl, $timeout);
+        $normalized = $this->normalizeSourceUrl($sourceUrl);
+        $image      = $this->fetchImage($normalized, $this->remainingTimeout($deadline, $timeout));
+
+        // Retry with the original URL in case Google ever changes its sizing syntax —
+        // but only when normalising actually changed it, and only while the budget still
+        // leaves room for a second request.
+        if ($image === null && $normalized !== $sourceUrl && $this->now() < $deadline) {
+            $image = $this->fetchImage($sourceUrl, $this->remainingTimeout($deadline, $timeout));
+        }
 
         if ($image === null) {
             return null;
@@ -397,6 +416,24 @@ class ImageCacheHelper
         }
 
         return $name;
+    }
+
+    /**
+     * How long a request started now may run without pushing the run past its deadline.
+     *
+     * Never returns zero, which the HTTP transport would read as "no timeout"; a request
+     * started with nothing left still ends after MIN_TIMEOUT.
+     *
+     * @param   float  $deadline  Point in time the run's download budget expires.
+     * @param   int    $timeout   Longest HTTP timeout in seconds.
+     *
+     * @return  integer
+     *
+     * @since   2.2.0
+     */
+    private function remainingTimeout(float $deadline, int $timeout): int
+    {
+        return max(self::MIN_TIMEOUT, min($timeout, (int) ceil($deadline - $this->now())));
     }
 
     /**
@@ -588,6 +625,10 @@ class ImageCacheHelper
     /**
      * Create a module image directory when it does not exist yet.
      *
+     * The folders under media/ that ship with the module carry an index.html, but these
+     * are made while the site runs, so one is written here too — a server with directory
+     * listing left on then has nothing to show.
+     *
      * @param   string  $dir  Module image directory.
      *
      * @return  bool
@@ -601,12 +642,21 @@ class ImageCacheHelper
         }
 
         try {
-            return Folder::create($dir);
+            if (!Folder::create($dir)) {
+                return false;
+            }
         } catch (\Throwable $e) {
             $this->log('Could not create the image folder ' . $dir . ': ' . $e->getMessage());
 
             return false;
         }
+
+        // Not being able to write it is no reason to refuse the folder: the photos are
+        // what matter, and a failure here reappears when the first one is written.
+        $blank = '';
+        File::write($dir . '/index.html', $blank);
+
+        return true;
     }
 
     /**
