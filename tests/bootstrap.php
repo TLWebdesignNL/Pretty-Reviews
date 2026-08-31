@@ -317,6 +317,11 @@ namespace Joomla\CMS {
             return static::$application ??= new TestInstallerApplication();
         }
 
+        /**
+         * The installer tests stand up no database, so this throws the way an
+         * unreachable one would -- which is what the column migration is guarded
+         * against, and how that guard is exercised.
+         */
         public static function getContainer()
         {
             throw new \RuntimeException('The installer tests never reach the database.');

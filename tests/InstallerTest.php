@@ -20,10 +20,13 @@ require_once __DIR__ . '/bootstrap.php';
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerAdapter;
+use Joomla\CMS\Log\Log;
 
 require_once \dirname(__DIR__) . '/script.php';
 
-$key = 'MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS';
+$key       = 'MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS';
+$preserved = 'MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_PRESERVED';
+$failed    = 'MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_FAILED';
 
 // The version being upgraded from is read from the extensions table in preflight;
 // the tests set it directly so nothing has to reach a database.
@@ -53,15 +56,16 @@ $withCache = static function (bool $present) use ($cacheDir): void {
 };
 
 /**
- * Run postflight and report the notices it raised: the messages it enqueued, and
- * whether it also printed the notice into the installer's own output.
+ * Run postflight and report what it raised: the messages it enqueued, what it printed
+ * into the installer's own output, what it logged, and whether it claimed success.
  */
 $run = static function (string $type, ?string $from) use ($script, $key): array {
     Factory::$application = new Joomla\CMS\TestInstallerApplication();
+    Log::$lines           = [];
 
     ob_start();
-    $script->from($from)->postflight($type, new InstallerAdapter());
-    $echoed = (string) ob_get_clean();
+    $returned = $script->from($from)->postflight($type, new InstallerAdapter());
+    $echoed   = (string) ob_get_clean();
 
     $notices = array_values(array_filter(
         Factory::$application->messages,
@@ -69,9 +73,12 @@ $run = static function (string $type, ?string $from) use ($script, $key): array 
     ));
 
     return [
-        'notices'   => $notices,
-        'shown'     => $notices !== [],
+        'notices'    => $notices,
+        'shown'      => $notices !== [],
         'alsoEchoed' => str_contains($echoed, $key),
+        'echoed'     => $echoed,
+        'logged'     => implode("\n", Log::$lines),
+        'returned'   => $returned,
     ];
 };
 
@@ -102,12 +109,40 @@ check('an unreadable version says nothing', !$run('update', null)['shown']);
 $withCache(false);
 check('a site with no cached reviews has nothing to refresh', !$run('update', '2.1.0')['shown']);
 
-group('Every language ships the string');
+group('A column migration that fails does not fail the update');
+
+// Factory::getContainer() throws in this suite, so an upgrade old enough to run the
+// pre-2.0.0 column migration stands in for a site whose database is unreachable.
+$withCache(false);
+$result = $run('update', '1.9.0');
+
+// By postflight the files are in place. An exception leaving it reaches the installer
+// adapter, which aborts and unwinds an update that had otherwise finished.
+check('the update still reports success', $result['returned'] === true);
+check('the administrator is warned', str_contains($result['logged'], $failed));
+check('with the reason attached', str_contains($result['logged'], 'never reach the database'));
+
+// Announcing a migration that did not happen is worse than saying nothing: the modules
+// it did not reach are the ones that widen to four columns on desktop.
+check('and is not told the columns were preserved', !str_contains($result['echoed'], $preserved));
+
+group('Every language ships the strings');
 
 foreach (['en-GB', 'nl-NL', 'de-DE', 'fr-FR', 'it-IT'] as $lang) {
     $file    = \dirname(__DIR__) . "/language/$lang/$lang.mod_prettyreviews.sys.ini";
     $strings = @parse_ini_file($file, false, INI_SCANNER_RAW) ?: [];
 
-    check("$lang defines it", trim((string) ($strings[$key] ?? '')) !== '');
-    check("$lang needs no escaping", !str_contains((string) ($strings[$key] ?? ''), '\\'));
+    foreach ([$key, $failed] as $wanted) {
+        $short = substr($wanted, strrpos($wanted, '_') + 1);
+        $value = (string) ($strings[$wanted] ?? '');
+
+        check("$lang defines $short", trim($value) !== '');
+        check("$lang needs no escaping for $short", !str_contains($value, '\\'));
+    }
+
+    // The reason the migration gave is sprintf'd into it.
+    check("$lang keeps the placeholder", str_contains((string) ($strings[$failed] ?? ''), '%s'));
 }
+
+// Report the totals and set the exit status the runner reads.
+finish();

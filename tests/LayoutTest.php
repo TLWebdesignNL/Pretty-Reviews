@@ -155,3 +155,6 @@ foreach ([
 
     check("refuses $label" . ($offenders === [] ? '' : ' (rendered by ' . implode(', ', $offenders) . ')'), $offenders === []);
 }
+
+// Report the totals and set the exit status the runner reads.
+finish();

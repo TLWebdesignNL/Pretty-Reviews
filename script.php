@@ -145,8 +145,12 @@ class mod_prettyreviewsInstallerScript
             // not change. New 2.0+ modules store their own column settings and are
             // therefore left untouched.
             if ($this->fromVersion !== null && version_compare($this->fromVersion, '2.0.0', '<')) {
-                $this->lockLegacyColumnsToSingle();
-                echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_PRESERVED');
+                // Announced only once it has happened. This is the one part of
+                // postflight that writes to the database, so whether it ran is not
+                // something to claim before knowing.
+                if ($this->lockLegacyColumnsToSingle()) {
+                    echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_PRESERVED');
+                }
             }
 
             // From 2.2.0 reviewer photos are stored on this site instead of being
@@ -163,16 +167,10 @@ class mod_prettyreviewsInstallerScript
                 // As a system message rather than installer output: this one asks the
                 // administrator to go and do something afterwards, so it wants the
                 // alert, and printing it as well only says the same thing twice.
-                // Guarded, because failing to mention the refresh is a far smaller
-                // problem than an update that dies on its way to saying so.
-                try {
-                    Factory::getApplication()->enqueueMessage(
-                        strip_tags(Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS')),
-                        'warning'
-                    );
-                } catch (\Throwable $e) {
-                    Log::add('Could not enqueue the Pretty Reviews photo notice: ' . $e->getMessage(), Log::WARNING, 'jerror');
-                }
+                Factory::getApplication()->enqueueMessage(
+                    strip_tags(Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS')),
+                    'warning'
+                );
             }
         }
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_POSTFLIGHT');
@@ -227,64 +225,83 @@ class mod_prettyreviewsInstallerScript
 
     /**
      * Pins every existing module instance to a single column on all breakpoints,
-     * preserving pre-2.0.0 behaviour. Only adds the keys when they are absent, so
-     * an administrator's saved choices are never overwritten.
+     * preserving pre-2.0.0 behaviour. Only adds the keys when they are absent, so an
+     * administrator's saved choices are never overwritten -- which also makes the
+     * migration safe to run again after a partial one.
      *
-     * @return  void
+     * A database failure here must not take the update down with it. By postflight the
+     * new files are already in place, and an exception leaving it reaches the installer
+     * adapter, which aborts and unwinds an update that had otherwise finished. So the
+     * administrator is told instead: modules left unmigrated fall back to the field
+     * defaults and widen to four columns on desktop, which the settings can put right.
+     *
+     * @return  boolean  True when the migration completed.
      */
-    private function lockLegacyColumnsToSingle(): void
+    private function lockLegacyColumnsToSingle(): bool
     {
-        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        try {
+            $db = Factory::getContainer()->get(DatabaseInterface::class);
 
-        $query = $db->getQuery(true)
-            ->select([$db->quoteName('id'), $db->quoteName('params')])
-            ->from($db->quoteName('#__modules'))
-            ->where($db->quoteName('module') . ' = ' . $db->quote('mod_prettyreviews'));
-        $db->setQuery($query);
-        $modules = $db->loadObjectList();
+            $query = $db->getQuery(true)
+                ->select([$db->quoteName('id'), $db->quoteName('params')])
+                ->from($db->quoteName('#__modules'))
+                ->where($db->quoteName('module') . ' = ' . $db->quote('mod_prettyreviews'));
+            $db->setQuery($query);
+            $modules = $db->loadObjectList();
 
-        if (empty($modules)) {
-            return;
-        }
-
-        $keys = [
-            'carousel_columns_mobile',
-            'carousel_columns_tablet',
-            'carousel_columns_desktop',
-            'carousel_columns_wide',
-        ];
-
-        foreach ($modules as $module) {
-            $params = json_decode((string) $module->params, true);
-
-            if (!\is_array($params)) {
-                $params = [];
+            if (empty($modules)) {
+                return true;
             }
 
-            $changed = false;
+            $keys = [
+                'carousel_columns_mobile',
+                'carousel_columns_tablet',
+                'carousel_columns_desktop',
+                'carousel_columns_wide',
+            ];
 
-            foreach ($keys as $key) {
-                if (!\array_key_exists($key, $params)) {
-                    $params[$key] = "1";
-                    $changed      = true;
+            foreach ($modules as $module) {
+                $params = json_decode((string) $module->params, true);
+
+                if (!\is_array($params)) {
+                    $params = [];
                 }
+
+                $changed = false;
+
+                foreach ($keys as $key) {
+                    if (!\array_key_exists($key, $params)) {
+                        $params[$key] = "1";
+                        $changed      = true;
+                    }
+                }
+
+                if (!$changed) {
+                    continue;
+                }
+
+                $encoded = json_encode($params);
+                $id      = (int) $module->id;
+
+                $update = $db->getQuery(true)
+                    ->update($db->quoteName('#__modules'))
+                    ->set($db->quoteName('params') . ' = :params')
+                    ->where($db->quoteName('id') . ' = :id')
+                    ->bind(':params', $encoded)
+                    ->bind(':id', $id, ParameterType::INTEGER);
+                $db->setQuery($update);
+                $db->execute();
             }
 
-            if (!$changed) {
-                continue;
-            }
+            return true;
+        } catch (\Throwable $e) {
+            Log::add(
+                Text::sprintf('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_FAILED', $e->getMessage()),
+                Log::WARNING,
+                'jerror'
+            );
 
-            $encoded = json_encode($params);
-            $id      = (int) $module->id;
-
-            $update = $db->getQuery(true)
-                ->update($db->quoteName('#__modules'))
-                ->set($db->quoteName('params') . ' = :params')
-                ->where($db->quoteName('id') . ' = :id')
-                ->bind(':params', $encoded)
-                ->bind(':id', $id, ParameterType::INTEGER);
-            $db->setQuery($update);
-            $db->execute();
+            return false;
         }
     }
 }
