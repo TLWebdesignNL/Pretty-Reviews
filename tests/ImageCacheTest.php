@@ -44,7 +44,7 @@ check('one size is requested for every avatar', str_ends_with(requests()[0]['url
 check(
     'the photo is served from this site',
     $images->publicPhotoUrl(7, $stored['reviews'][100]['profile_photo_local'])
-        === '/media/mod_prettyreviews/images/7/' . $stored['reviews'][100]['profile_photo_local']
+        === 'https://example.test/media/mod_prettyreviews/images/7/' . $stored['reviews'][100]['profile_photo_local']
 );
 check('no initials avatar is written when the download works', glob($dir . '/initials-*.svg') === []);
 

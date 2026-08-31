@@ -183,6 +183,93 @@ namespace {
     }
 }
 
+namespace Joomla\CMS\Language {
+    /**
+     * Language strings are not what the layout tests are about, so a key stands in for
+     * itself and sprintf keeps its arguments visible.
+     */
+    class Text
+    {
+        public static function _($string)
+        {
+            return (string) $string;
+        }
+
+        public static function sprintf($string, ...$args)
+        {
+            return $string . '(' . implode(',', array_map('strval', $args)) . ')';
+        }
+
+        public static function plural($string, $n, ...$args)
+        {
+            return $string . '(' . $n . ')';
+        }
+    }
+}
+
+namespace Joomla\CMS\HTML {
+    class HTMLHelper
+    {
+        public static function _($key, ...$args)
+        {
+            return null;
+        }
+    }
+}
+
+namespace Joomla\CMS\WebAsset {
+    /**
+     * Fluent no-op: the layouts chain registerAndUseStyle/useScript on it.
+     */
+    class TestWebAssetManager
+    {
+        public function __call($name, $arguments)
+        {
+            return $this;
+        }
+    }
+}
+
+namespace Joomla\CMS\Application {
+    use Joomla\CMS\WebAsset\TestWebAssetManager;
+
+    class TestDocument
+    {
+        public function getWebAssetManager()
+        {
+            return new TestWebAssetManager();
+        }
+    }
+
+    class TestApplication
+    {
+        public function getDocument()
+        {
+            return new TestDocument();
+        }
+    }
+}
+
+namespace Joomla\Registry {
+    /**
+     * Just enough Registry for a layout: get() with a default.
+     */
+    class TestRegistry
+    {
+        private array $data;
+
+        public function __construct(array $data = [])
+        {
+            $this->data = $data;
+        }
+
+        public function get($key, $default = null)
+        {
+            return $this->data[$key] ?? $default;
+        }
+    }
+}
+
 namespace Joomla\CMS\Uri {
 
     /**

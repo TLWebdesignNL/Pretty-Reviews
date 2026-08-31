@@ -34,6 +34,17 @@ $safeUrl = static function ($url) use ($escape): string {
     return $escape($url);
 };
 
+// Reviewer photos are served from this site, and a review cached before 2.2.0 gets an
+// initials avatar inline instead. Neither is a link somewhere, so both are held to a
+// shape of our own making rather than to $safeUrl's http(s) rule.
+$safePhotoUrl = static function ($url) use ($escape, $safeUrl): string {
+    $url = trim((string) ($url ?? ''));
+    if (preg_match('#^data:image/svg\+xml;base64,[A-Za-z0-9+/]+={0,2}$#', $url) === 1) {
+        return $escape($url);
+    }
+    return $safeUrl($url);
+};
+
 $rating         = (float) ($reviewdata['rating'] ?? 0);
 $ratingsCount   = (int) ($googleReviews['ratingsCount'] ?? 0);
 $reviews        = $googleReviews['reviews'] ?? [];
@@ -58,7 +69,7 @@ $writeReviewUrl = $safeUrl($writeReviewUrl ?? '');
             <div class="carousel-inner">
                 <?php
                 foreach ($reviews as $review) :
-                    $photoUrl     = $safeUrl($review['profile_photo_url'] ?? '');
+                    $photoUrl     = $safePhotoUrl($review['profile_photo_url'] ?? '');
                     $authorUrl    = $safeUrl($review['author_url'] ?? '');
                     $author       = $escape($review['author_name'] ?? '');
                     $text         = $escape($review['text'] ?? '');

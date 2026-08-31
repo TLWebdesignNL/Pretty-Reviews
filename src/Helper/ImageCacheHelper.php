@@ -281,8 +281,10 @@ class ImageCacheHelper
      * The filename is re-validated here rather than trusted, because it is read back
      * from a file on disk that an administrator (or a compromised account) can edit.
      *
-     * The URL is root-relative, so it keeps working whichever of a site's domains — or
-     * which protocol — the page happens to be served from.
+     * The URL is absolute, because every layout — and every template override already
+     * in the wild — passes a photo URL through a guard that accepts nothing but
+     * http(s). Uri::root() is resolved per request, so a site answering on several
+     * domains still hands each visitor its own.
      *
      * @param   int     $moduleId  Module record id.
      * @param   string  $file      Filename as stored in profile_photo_local.
@@ -303,7 +305,7 @@ class ImageCacheHelper
             return '';
         }
 
-        return Uri::root(true) . '/' . self::MEDIA_PATH . '/' . $moduleId . '/' . $file;
+        return Uri::root() . self::MEDIA_PATH . '/' . $moduleId . '/' . $file;
     }
 
     /**
@@ -674,10 +676,63 @@ class ImageCacheHelper
     }
 
     /**
-     * Write an initials avatar for a reviewer, reusing one that already exists.
+     * An initials avatar for a reviewer as an inline data URI.
+     *
+     * Used while rendering a cache written before this feature existed, where there is
+     * no stored photo to point at yet. Inline, because a page render neither downloads
+     * nor writes anything: the avatar has to be carried in the markup or not at all.
+     *
+     * @param   string  $authorName  Reviewer name.
+     *
+     * @return  string  A data: URI holding the avatar.
+     *
+     * @since   2.2.0
+     */
+    public function initialsDataUri(string $authorName): string
+    {
+        return 'data:image/svg+xml;base64,' . base64_encode($this->initialsSvg($authorName));
+    }
+
+    /**
+     * Build the initials avatar markup for a reviewer.
      *
      * At most two letters or digits are taken from the name, so the generated markup
      * can never contain anything but those characters.
+     *
+     * @param   string  $authorName  Reviewer name.
+     *
+     * @return  string  SVG markup.
+     *
+     * @since   2.2.0
+     */
+    private function initialsSvg(string $authorName): string
+    {
+        $authorName = trim($authorName);
+        $initials   = '';
+
+        foreach (preg_split('/\s+/u', $authorName, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
+            if (preg_match('/[\p{L}\p{N}]/u', $word, $match) === 1) {
+                $initials .= $match[0];
+            }
+
+            if (mb_strlen($initials) === 2) {
+                break;
+            }
+        }
+
+        $initials = mb_strtoupper($initials);
+        $hue      = crc32($authorName) % 360;
+
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . self::PHOTO_SIZE . ' ' . self::PHOTO_SIZE . '" role="img">'
+            . '<rect width="' . self::PHOTO_SIZE . '" height="' . self::PHOTO_SIZE . '" fill="hsl(' . $hue . ',42%,62%)"/>'
+            . ($initials === '' ? '' : '<text x="50%" y="50%" dy="0.35em" text-anchor="middle"'
+                . ' font-family="Helvetica,Arial,sans-serif" font-size="' . (int) (self::PHOTO_SIZE * 0.42) . '"'
+                . ' fill="#ffffff">' . $initials . '</text>')
+            . '</svg>';
+    }
+
+    /**
+     * Write an initials avatar for a reviewer, reusing one that already exists.
      *
      * @param   string  $dir         Module image directory.
      * @param   string  $authorName  Reviewer name.
@@ -695,28 +750,7 @@ class ImageCacheHelper
             return basename($name);
         }
 
-        $initials = '';
-
-        foreach (preg_split('/\s+/u', $authorName, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
-            if (preg_match('/[\p{L}\p{N}]/u', $word, $match) === 1) {
-                $initials .= $match[0];
-            }
-
-            if (mb_strlen($initials) === 2) {
-                break;
-            }
-        }
-
-        $initials = mb_strtoupper($initials);
-        $hue      = crc32($authorName) % 360;
-        $svg      = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . self::PHOTO_SIZE . ' ' . self::PHOTO_SIZE . '" role="img">'
-            . '<rect width="' . self::PHOTO_SIZE . '" height="' . self::PHOTO_SIZE . '" fill="hsl(' . $hue . ',42%,62%)"/>'
-            . ($initials === '' ? '' : '<text x="50%" y="50%" dy="0.35em" text-anchor="middle"'
-                . ' font-family="Helvetica,Arial,sans-serif" font-size="' . (int) (self::PHOTO_SIZE * 0.42) . '"'
-                . ' fill="#ffffff">' . $initials . '</text>')
-            . '</svg>';
-
-        if (!$this->createDirectory($dir) || !$this->writeAtomically($name, $svg)) {
+        if (!$this->createDirectory($dir) || !$this->writeAtomically($name, $this->initialsSvg($authorName))) {
             $this->log('Could not write the initials avatar ' . $name . '.');
 
             return null;

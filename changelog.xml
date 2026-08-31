@@ -13,7 +13,7 @@
             <item>A photo that will not download is tried again on the next update; one that fails twice in a row is left alone for an hour, so an avatar that is gone for good stops using up the download time the others need.</item>
         </change>
         <note>
-            <item>Existing modules keep working unchanged, but reviewer photos are not shown until the reviews are next updated — press Fetch Google Reviews once, or wait for the Pretty Reviews task plugin's next run.</item>
+            <item>Existing modules keep working unchanged. Until the reviews are next updated there is no stored photo to show, so reviewers appear with an initials avatar; press Fetch Google Reviews once, or wait for the Pretty Reviews task plugin's next run, to replace them with the real photos.</item>
         </note>
     </changelog>
     <changelog>

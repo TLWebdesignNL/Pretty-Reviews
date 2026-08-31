@@ -243,19 +243,35 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Build the public URL of a review's locally stored photo.
+     * Build the URL of a review's photo as this site serves it.
+     *
+     * A cache written before 2.2.0 names no stored photo, and a page render is not
+     * allowed to download one: it would put an outbound request in the path of every
+     * anonymous visitor. Such a review falls back to an initials avatar built inline
+     * from the reviewer's name, so the module shows a complete row of avatars from the
+     * moment it is upgraded and still never sends a visitor to Google. The real photos
+     * replace them on the next refresh.
+     *
+     * A review that carries no photo URL at all gets nothing, which is what it got
+     * before and what it gets after a refresh too.
      *
      * @param   int    $moduleId  Module record id.
      * @param   array  $review    A single review.
      *
-     * @return  string  Absolute URL on this site, or an empty string when there is
-     *                  nothing to show.
+     * @return  string  A URL to render, or an empty string when there is nothing to
+     *                  show.
      *
      * @since   2.2.0
      */
     public function localPhotoUrl(int $moduleId, array $review): string
     {
-        return $this->imageCache()->publicPhotoUrl($moduleId, (string) ($review['profile_photo_local'] ?? ''));
+        $stored = $this->imageCache()->publicPhotoUrl($moduleId, (string) ($review['profile_photo_local'] ?? ''));
+
+        if ($stored !== '' || trim((string) ($review['profile_photo_url'] ?? '')) === '') {
+            return $stored;
+        }
+
+        return $this->imageCache()->initialsDataUri((string) ($review['author_name'] ?? ''));
     }
 
     /**

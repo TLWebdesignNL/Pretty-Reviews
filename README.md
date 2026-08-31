@@ -142,8 +142,9 @@ stored under `media/mod_prettyreviews/images/{module_id}/`, and the layouts poin
 
 Photos are collected when the reviews are refreshed — the **Update Reviews** button, or the task plugin. A
 reviewer whose photo could not be downloaded gets an avatar generated from their initials instead, so no
-request ever leaves for Google. A cache created before this feature existed shows no reviewer photos until
-its next refresh; nothing is ever downloaded while a page is being viewed.
+request ever leaves for Google. A cache created before this feature existed has no stored photo to point at
+yet, so its reviewers are shown the same initials avatar until the next refresh replaces them with the real
+ones; nothing is ever downloaded while a page is being viewed.
 
 Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB, and only after the downloaded
 bytes are confirmed to be a JPEG, PNG, GIF or WebP. Anything else is refused and the initials avatar is kept.
