@@ -1,6 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# The release zip is the GitHub archive of the tag, so keep the tests out of it:
-# they are for developing the module, not for running it.
+# The release zip is the GitHub archive of the tag, so keep out what is there to
+# develop the module rather than to run it: the tests, and the workflows that cut
+# the release in the first place.
 /tests export-ignore
+/.github export-ignore
