@@ -1,8 +1,20 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# The release zip is the GitHub archive of the tag, so keep out what is there to
-# develop the module rather than to run it: the tests, and the workflows that cut
-# the release in the first place.
+# The release zip is the GitHub archive of the tag, so it should hold what Joomla
+# installs and nothing else: the manifest, its script, the four folders listed in
+# <files>, and media. Everything below belongs to developing or publishing the
+# module rather than to running it.
 /tests export-ignore
 /.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/README.md export-ignore
+
+# Both are served to Joomla from main over https -- <updateservers> and
+# <changelogurl> name raw.githubusercontent URLs -- so a copy frozen inside the zip
+# is never read, and is out of date the moment the next version is tagged.
+/changelog.xml export-ignore
+/updates.xml export-ignore
+
+# LICENSE stays: the GPL asks for it to travel with the copies it covers.
