@@ -144,10 +144,18 @@ Photos are collected when the reviews are refreshed — the **Update Reviews** b
 reviewer whose photo could not be downloaded gets an avatar generated from their initials instead, so no
 request ever leaves for Google. A cache created before this feature existed has no stored photo to point at
 yet, so its reviewers are shown the same initials avatar until the next refresh replaces them with the real
-ones; nothing is ever downloaded while a page is being viewed.
+ones; nothing is ever downloaded while a page is being viewed. Updating a site that already has reviews
+cached says so once, in a message on the update screen, so that first refresh is not forgotten.
 
-Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB, and only after the downloaded
-bytes are confirmed to be a JPEG, PNG, GIF or WebP. Anything else is refused and the initials avatar is kept.
+Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB and 4096 pixels a side, and
+only after the downloaded bytes are confirmed to be a JPEG, PNG, GIF or WebP. Anything else is refused and
+the initials avatar is kept. Redirects are followed by the module rather than by the HTTP client, at most
+three hops, and every hop is checked against those hosts again.
+
+A photo that will not download is tried again on the next refresh. One that fails twice in a row is left
+alone for an hour, so a photo that is gone for good stops spending the download time the other reviewers
+need. The image folder is created with an empty `index.html`, so a server with directory listing left on has
+nothing to show.
 
 **Purge Reviews** removes the stored photos along with the cached reviews.
 
@@ -193,8 +201,9 @@ The backend refresh now uses:
 
 Downloaded profile photos are restricted to Google's photo hosts over HTTPS, capped in size, and stored only
 when the downloaded bytes decode as a known image format — the file extension comes from that check rather
-than from the URL, and a remote SVG is always refused. Stored filenames are validated again before they are
-put into a page.
+than from the URL, and a remote SVG is always refused. Redirects are resolved by the module instead of the
+HTTP client so that every hop is checked against the allowed hosts, not just the URL the fetch started from.
+Stored filenames are validated again before they are put into a page.
 
 ## Development
 
