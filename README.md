@@ -6,6 +6,7 @@ Pretty Reviews is a Joomla site module that displays Google business reviews in 
 
 - Display Google rating, review count, review text, author names, profile photos, star ratings, and a "View all reviews" link.
 - Optional "Leave a review" button that opens Google's review form for the configured Place ID.
+- Reviewer profile photos are stored on your own site and served from your own domain, so displaying the reviews sends no visitor data to Google. Reviewers whose photo could not be downloaded get a locally generated avatar with their initials.
 - Choose from Bootstrap layouts (Default, Card Carousel, Compact), UIkit/YOOtheme layouts (UIkit Default, UIkit Compact, UIkit List), plus a simple List and a classic Legacy layout.
 - Set responsive column counts per breakpoint — 1 to 6 reviews side by side for mobile, tablet, desktop, and wide screens — in the carousel layouts.
 - Bootstrap layouts use a native CSS scroll-snap carousel: native touch swipe, one-column-at-a-time navigation, a usable scrollable fallback without JavaScript, and no inline styles (CSP-friendly). UIkit layouts use UIkit's native slider.
@@ -118,6 +119,10 @@ The refresh action:
 - requires edit permission for the module;
 - reads the Google credentials from the saved module parameters;
 - writes the raw review cache to `media/mod_prettyreviews/data-{module_id}.json`;
+- downloads any reviewer photos it does not have yet to `media/mod_prettyreviews/images/{module_id}/`, and
+  removes the ones no cached review uses any more;
+- spends at most about fifteen seconds downloading photos per run to keep the request quick, and reports in
+  the success message how many are still waiting, so you know to press the button again on a slow connection;
 - returns clear feedback when Google rejects the API request.
 
 Save the module before the first refresh so Joomla has a module ID and stored credentials to use.
@@ -129,6 +134,22 @@ Automatic updates are handled by the companion task plugin:
 https://github.com/TLWebdesignNL/Pretty-Reviews-Task-Scheduler-Plugin
 
 Use version 1.1.0 or newer of the task plugin with Pretty Reviews module 1.2.0 or newer. The task plugin calls the module helper directly and no longer sends credentials through an HTTP request.
+
+## Profile Photos
+
+Reviewer photos are never loaded from Google by your visitors' browsers. Each photo is downloaded once and
+stored under `media/mod_prettyreviews/images/{module_id}/`, and the layouts point at that copy.
+
+Photos are collected when the reviews are refreshed — the **Update Reviews** button, or the task plugin. A
+reviewer whose photo could not be downloaded gets an avatar generated from their initials instead, so no
+request ever leaves for Google. A cache created before this feature existed has no stored photo to point at
+yet, so its reviewers are shown the same initials avatar until the next refresh replaces them with the real
+ones; nothing is ever downloaded while a page is being viewed.
+
+Only images from Google's own photo hosts are accepted, over HTTPS, up to 2 MB, and only after the downloaded
+bytes are confirmed to be a JPEG, PNG, GIF or WebP. Anything else is refused and the initials avatar is kept.
+
+**Purge Reviews** removes the stored photos along with the cached reviews.
 
 ## Troubleshooting
 
@@ -169,6 +190,22 @@ The backend refresh now uses:
 - server-side credential lookup from the module record;
 - Joomla's HTTP client for Google API requests;
 - escaped review output in the frontend layout.
+
+Downloaded profile photos are restricted to Google's photo hosts over HTTPS, capped in size, and stored only
+when the downloaded bytes decode as a known image format — the file extension comes from that check rather
+than from the URL, and a remote SVG is always refused. Stored filenames are validated again before they are
+put into a page.
+
+## Development
+
+The module has no build step and no Composer dependencies. To run the tests:
+
+```bash
+php tests/run.php
+```
+
+Each test file runs in its own process against a temporary site root, standing up just enough of Joomla's
+filesystem, HTTP and URI classes to exercise the helpers. The tests are excluded from the release archive.
 
 ## Releases and Updates
 

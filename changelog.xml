@@ -2,6 +2,23 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>2.2.0</version>
+        <addition>
+            <item>Reviewer profile photos are now stored on your own website and served from your own domain, so no visitor data is sent to Google when the reviews are displayed. Photos are downloaded whenever the reviews are updated; nothing is ever downloaded while a page is being viewed.</item>
+            <item>Reviewers whose photo has not been stored yet, or could not be downloaded, are shown a locally generated avatar with their initials instead.</item>
+        </addition>
+        <change>
+            <item>Photos are stored per module under media/mod_prettyreviews/images/, and are removed together with the reviews when a module is purged. Photos belonging to reviews that are no longer cached are cleaned up automatically.</item>
+            <item>To keep the Update Reviews button responsive, an update spends at most about fifteen seconds downloading photos: a fast connection fills a large cache in one go, a slow one leaves the remainder for the next update. When photos are left waiting, the message after the update says how many, so you know to press the button again.</item>
+            <item>A photo that will not download is tried again on the next update; one that fails twice in a row is left alone for an hour, so an avatar that is gone for good stops using up the download time the others need.</item>
+        </change>
+        <note>
+            <item>Existing modules keep working unchanged. Until the reviews are next updated there is no stored photo to show, so reviewers appear with an initials avatar; press Fetch Google Reviews once, or wait for the Pretty Reviews task plugin's next run, to replace them with the real photos.</item>
+        </note>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>2.1.0</version>
         <addition>
             <item>Configurable minimum star rating: choose to show all reviews, or only those with at least 2, 3, 4, or 5 stars. The default is 4 stars and up, matching the module's previous behaviour.</item>

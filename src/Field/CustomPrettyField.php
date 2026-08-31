@@ -85,6 +85,7 @@ class CustomPrettyField extends FormField
         $wa = $app->getDocument()->getWebAssetManager();
         Text::script('MOD_PRETTYREVIEWS_UPDATE_MISSING_MODULE_OR_TOKEN');
         Text::script('MOD_PRETTYREVIEWS_UPDATE_SUCCESS');
+        Text::script('MOD_PRETTYREVIEWS_UPDATE_SUCCESS_PENDING_PHOTOS');
         Text::script('MOD_PRETTYREVIEWS_UPDATE_AJAX_ERROR');
         Text::script('MOD_PRETTYREVIEWS_PURGE_SUCCESS');
         Text::script('MOD_PRETTYREVIEWS_PURGE_CONFIRM');

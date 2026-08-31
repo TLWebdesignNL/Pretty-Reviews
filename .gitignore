@@ -2,3 +2,7 @@
 .idea
 .DS_Store
 .claude
+
+# Runtime cache, written when this repo is symlinked into a Joomla installation
+media/data-*.json
+media/images/*/

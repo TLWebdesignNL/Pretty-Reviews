@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_PRETTYREVIEWS</name>
-    <creationDate>2026-06-23</creationDate>
+    <creationDate>2026-08-23</creationDate>
     <author>Tom van der Laan</author>
     <authorEmail>info@tlwebdesign.nl</authorEmail>
     <authorUrl>https://tlwebdesign.nl</authorUrl>
     <copyright>TLWebdesign</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
     <description>MOD_PRETTYREVIEWS_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">TLWeb\Module\Prettyreviews</namespace>
@@ -22,6 +22,7 @@
         <filename>joomla.asset.json</filename>
         <folder>js</folder>
         <folder>css</folder>
+        <folder>images</folder>
     </media>
     <config>
         <fields name="params">

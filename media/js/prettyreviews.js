@@ -39,8 +39,20 @@ async function postAction(el, action, successKey, successFallback) {
         const response = await fetch(prettyReviewsOptions.endpoint, {method: 'POST', body});
         const resp = await response.json();
 
-        if (response.ok && resp.success === true && resp.data === true) {
-            renderMessage('success', [translate(successKey, successFallback)]);
+        // Purge answers with a plain true; update answers with {updated, pendingPhotos}.
+        const data = resp.data;
+        const done = data === true || (!!data && typeof data === 'object' && data.updated === true);
+        const pending = (!!data && typeof data === 'object') ? (Number(data.pendingPhotos) || 0) : 0;
+
+        if (response.ok && resp.success === true && done) {
+            if (pending > 0) {
+                renderMessage('warning', [translate(
+                    'MOD_PRETTYREVIEWS_UPDATE_SUCCESS_PENDING_PHOTOS',
+                    'Reviews have been updated. Profile photos still to download: %s. Press Update Reviews again to fetch the next batch.'
+                ).replace('%s', pending)]);
+            } else {
+                renderMessage('success', [translate(successKey, successFallback)]);
+            }
         } else {
             console.error(resp);
             renderMessage('error', [resp.message || translate(

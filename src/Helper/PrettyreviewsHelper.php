@@ -30,15 +30,32 @@ use Joomla\Filesystem\File;
 class PrettyreviewsHelper
 {
     /**
+     * Store for locally cached reviewer photos.
+     *
+     * @var    ImageCacheHelper|null
+     * @since  2.2.0
+     */
+    private ?ImageCacheHelper $imageCache = null;
+
+    /**
      * AJAX entry point — guarded by CSRF + per-module ACL, then refreshes from Google.
      *
-     * @return  bool
+     * Besides whether the refresh succeeded, the response carries how many reviewer
+     * photos were left for a later run because the download time ran out, so the
+     * administrator knows to press the button again on a large backlog.
+     *
+     * @return  array  Keys: updated (bool), pendingPhotos (int).
      *
      * @since   1.2.0
      */
-    public function updateGoogleReviewsAjax(): bool
+    public function updateGoogleReviewsAjax(): array
     {
-        return $this->refreshFromGoogle($this->authorizeModuleRequest());
+        $updated = $this->refreshFromGoogle($this->authorizeModuleRequest());
+
+        return [
+            'updated'       => $updated,
+            'pendingPhotos' => $this->imageCache()->pendingDownloads(),
+        ];
     }
 
     /**
@@ -195,6 +212,10 @@ class PrettyreviewsHelper
         $raw       = $this->readJson($cachePath);
         $merged    = $this->mergeReviews($googleReviews, $raw);
 
+        // Store the reviewer photos on this site, so visitors never load them from
+        // Google. Done before the write, so a review and its photo are saved together.
+        $merged = $this->imageCache()->syncReviewPhotos($moduleId, $merged);
+
         return $this->writeJson($cachePath, $merged);
     }
 
@@ -213,11 +234,59 @@ class PrettyreviewsHelper
     {
         $path = $this->cachePath($moduleId);
 
-        if (!is_file($path)) {
-            return true;
+        // Both halves run unconditionally: a missing data file must not leave the
+        // downloaded photos behind.
+        $imagesPurged = $this->imageCache()->purgeModuleImages($moduleId);
+        $dataPurged   = !is_file($path) || File::delete($path);
+
+        return $imagesPurged && $dataPurged;
+    }
+
+    /**
+     * Build the URL of a review's photo as this site serves it.
+     *
+     * A cache written before 2.2.0 names no stored photo, and a page render is not
+     * allowed to download one: it would put an outbound request in the path of every
+     * anonymous visitor. Such a review falls back to an initials avatar built inline
+     * from the reviewer's name, so the module shows a complete row of avatars from the
+     * moment it is upgraded and still never sends a visitor to Google. The real photos
+     * replace them on the next refresh.
+     *
+     * A review that carries no photo URL at all gets nothing, which is what it got
+     * before and what it gets after a refresh too.
+     *
+     * @param   int    $moduleId  Module record id.
+     * @param   array  $review    A single review.
+     *
+     * @return  string  A URL to render, or an empty string when there is nothing to
+     *                  show.
+     *
+     * @since   2.2.0
+     */
+    public function localPhotoUrl(int $moduleId, array $review): string
+    {
+        $stored = $this->imageCache()->publicPhotoUrl($moduleId, (string) ($review['profile_photo_local'] ?? ''));
+
+        if ($stored !== '' || trim((string) ($review['profile_photo_url'] ?? '')) === '') {
+            return $stored;
         }
 
-        return File::delete($path);
+        return $this->imageCache()->initialsDataUri((string) ($review['author_name'] ?? ''));
+    }
+
+    /**
+     * Resolve the photo cache, creating it on first use.
+     *
+     * Built here rather than injected, because CustomPrettyField constructs this
+     * helper directly with new, outside the container.
+     *
+     * @return  ImageCacheHelper
+     *
+     * @since   2.2.0
+     */
+    private function imageCache(): ImageCacheHelper
+    {
+        return $this->imageCache ??= new ImageCacheHelper();
     }
 
     /**
@@ -280,14 +349,14 @@ class PrettyreviewsHelper
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_REQUEST_FAILED'), 502, $e);
         }
 
-        if ((int) $response->code !== 200) {
+        if ((int) $response->getStatusCode() !== 200) {
             throw new \RuntimeException(
-                Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', (int) $response->code),
+                Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', (int) $response->getStatusCode()),
                 502
             );
         }
 
-        $decoded = json_decode((string) $response->body);
+        $decoded = json_decode((string) $response->getBody());
 
         if (!$decoded instanceof \stdClass) {
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_INVALID_RESPONSE'), 502);
@@ -349,6 +418,9 @@ class PrettyreviewsHelper
      * in present(), so lowering the threshold later never loses cached reviews.
      * Top-level rating / count / url are overwritten.
      *
+     * New reviews are stored as arrays so they match the ones readJson() returns; the
+     * encoded JSON is identical either way.
+     *
      * @param   object  $googleReviews  Decoded API response.
      * @param   array   $raw            Existing raw cache (may be empty).
      *
@@ -373,7 +445,7 @@ class PrettyreviewsHelper
         if (isset($googleReviews->result->reviews)) {
             foreach ($googleReviews->result->reviews as $review) {
                 if (!isset($raw['reviews']) || !array_key_exists($review->time, $raw['reviews'])) {
-                    $raw['reviews'][$review->time] = $review;
+                    $raw['reviews'][$review->time] = (array) $review;
                 }
             }
         }
