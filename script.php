@@ -148,10 +148,45 @@ class mod_prettyreviewsInstallerScript
                 $this->lockLegacyColumnsToSingle();
                 echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_COLUMNS_PRESERVED');
             }
+
+            // From 2.2.0 reviewer photos are stored on this site instead of being
+            // loaded from Google by the visitor's browser. A cache written by an
+            // earlier release names no stored photo, so until it is refreshed its
+            // reviewers show an initials avatar. Nothing is downloaded while a page
+            // is viewed, so only an explicit refresh can fill them in -- which the
+            // administrator has to be told to do.
+            if (
+                $this->fromVersion !== null
+                && version_compare($this->fromVersion, '2.2.0', '<')
+                && $this->hasCachedReviews()
+            ) {
+                $message = Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS');
+
+                echo $message;
+
+                // Also as a system message. The installer's own output is read once and
+                // scrolled past, and this one asks for something to be done afterwards.
+                Factory::getApplication()->enqueueMessage(strip_tags($message), 'warning');
+            }
         }
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_POSTFLIGHT');
 
         return true;
+    }
+
+    /**
+     * Whether any module has reviews cached, and so photos worth refreshing.
+     *
+     * A site with nothing cached displays no reviews at all, so there is nothing for
+     * an administrator to act on and the notice would only be noise.
+     *
+     * @return  boolean
+     */
+    private function hasCachedReviews(): bool
+    {
+        $files = glob(JPATH_ROOT . '/media/mod_prettyreviews/data-*.json');
+
+        return \is_array($files) && $files !== [];
     }
 
     /**
