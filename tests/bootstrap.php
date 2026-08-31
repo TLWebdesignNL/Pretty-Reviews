@@ -22,6 +22,8 @@
 
 namespace {
     \define('_JEXEC', 1);
+    \define('JOOMLA_MINIMUM_PHP', '8.1.0');
+    \define('JVERSION', '6.0.0');
     \define('JPATH_ROOT', getenv('TEST_ROOT') ?: sys_get_temp_dir() . '/prettyreviews-test');
 
     if (!is_dir(JPATH_ROOT)) {
@@ -266,6 +268,58 @@ namespace Joomla\Registry {
         public function get($key, $default = null)
         {
             return $this->data[$key] ?? $default;
+        }
+    }
+}
+
+namespace Joomla\CMS\Installer {
+    /**
+     * Only ever type-hinted by the installer script, never called by it.
+     */
+    class InstallerAdapter
+    {
+    }
+}
+
+namespace Joomla\Database {
+    interface DatabaseInterface
+    {
+    }
+
+    class ParameterType
+    {
+        public const INTEGER = 'int';
+        public const STRING  = 'string';
+    }
+}
+
+namespace Joomla\CMS {
+    /**
+     * Collects what the installer script enqueues, so a test can see whether the
+     * administrator would actually have been told anything.
+     */
+    class TestInstallerApplication
+    {
+        public array $messages = [];
+
+        public function enqueueMessage($message, $type = 'message')
+        {
+            $this->messages[] = ['message' => $message, 'type' => $type];
+        }
+    }
+
+    class Factory
+    {
+        public static ?TestInstallerApplication $application = null;
+
+        public static function getApplication()
+        {
+            return static::$application ??= new TestInstallerApplication();
+        }
+
+        public static function getContainer()
+        {
+            throw new \RuntimeException('The installer tests never reach the database.');
         }
     }
 }

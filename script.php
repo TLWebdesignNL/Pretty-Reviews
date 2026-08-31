@@ -160,13 +160,19 @@ class mod_prettyreviewsInstallerScript
                 && version_compare($this->fromVersion, '2.2.0', '<')
                 && $this->hasCachedReviews()
             ) {
-                $message = Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS');
-
-                echo $message;
-
-                // Also as a system message. The installer's own output is read once and
-                // scrolled past, and this one asks for something to be done afterwards.
-                Factory::getApplication()->enqueueMessage(strip_tags($message), 'warning');
+                // As a system message rather than installer output: this one asks the
+                // administrator to go and do something afterwards, so it wants the
+                // alert, and printing it as well only says the same thing twice.
+                // Guarded, because failing to mention the refresh is a far smaller
+                // problem than an update that dies on its way to saying so.
+                try {
+                    Factory::getApplication()->enqueueMessage(
+                        strip_tags(Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_REFRESH_PHOTOS')),
+                        'warning'
+                    );
+                } catch (\Throwable $e) {
+                    Log::add('Could not enqueue the Pretty Reviews photo notice: ' . $e->getMessage(), Log::WARNING, 'jerror');
+                }
             }
         }
         echo Text::_('MOD_PRETTYREVIEWS_INSTALLERSCRIPT_POSTFLIGHT');
