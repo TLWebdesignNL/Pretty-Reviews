@@ -2,6 +2,21 @@
     <changelog>
         <element>mod_prettyreviews</element>
         <type>module</type>
+        <version>2.3.0</version>
+        <addition>
+            <item>Choice of Google Places API: Places API (Legacy), the default and what every earlier version used, or Places API (New). The new API also finds businesses the legacy API cannot, such as service-area businesses without an address, and is the only one Google still enables for new Cloud projects. When using it, enable "Places API (New)" in the Cloud project and allow it in the API key's restrictions.</item>
+            <item>Hide reviewers: list names, one per line, whose reviews should not be shown. Names must match in full; upper and lower case and extra spaces do not matter. The reviews stay cached, so removing a name shows them again.</item>
+        </addition>
+        <change>
+            <item>The Reviews Fetch Sort setting is only shown for Places API (Legacy), as Places API (New) always returns the most relevant reviews.</item>
+        </change>
+        <note>
+            <item>Existing modules keep using Places API (Legacy) and work unchanged. Both APIs store the same review data, so switching keeps the reviews already cached.</item>
+        </note>
+    </changelog>
+    <changelog>
+        <element>mod_prettyreviews</element>
+        <type>module</type>
         <version>2.2.0</version>
         <addition>
             <item>Reviewer profile photos are now stored on your own website and served from your own domain, so no visitor data is sent to Google when the reviews are displayed. Photos are downloaded whenever the reviews are updated; nothing is ever downloaded while a page is being viewed.</item>
