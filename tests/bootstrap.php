@@ -430,7 +430,7 @@ namespace Joomla\CMS\Http {
 
         public function get($url, array $headers = [], $timeout = null)
         {
-            self::$requests[] = ['url' => $url, 'timeout' => $timeout];
+            self::$requests[] = ['url' => $url, 'headers' => $headers, 'timeout' => $timeout];
 
             return (self::$handler)($url);
         }

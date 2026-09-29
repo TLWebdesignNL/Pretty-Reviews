@@ -61,9 +61,21 @@
                         default=""
                 />
                 <field
+                        name="apiversion"
+                        type="radio"
+                        default="legacy"
+                        label="MOD_PRETTYREVIEWS_FIELD_APIVERSION_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_APIVERSION_DESC"
+                        class="btn-group"
+                >
+                    <option value="legacy">MOD_PRETTYREVIEWS_APIVERSION_LEGACY</option>
+                    <option value="new">MOD_PRETTYREVIEWS_APIVERSION_NEW</option>
+                </field>
+                <field
                         name="reviewsort"
                         type="radio"
                         default="most_relevant"
+                        showon="apiversion:legacy"
                         label="MOD_PRETTYREVIEWS_FIELD_REVIEWSORT_LABEL"
                         description="MOD_PRETTYREVIEWS_FIELD_REVIEWSORT_DESC"
                         class="btn-group"
@@ -142,6 +154,14 @@
                     <option value="4">MOD_PRETTYREVIEWS_MINRATING_4</option>
                     <option value="5">MOD_PRETTYREVIEWS_MINRATING_5</option>
                 </field>
+                <field
+                        name="excludenames"
+                        type="textarea"
+                        label="MOD_PRETTYREVIEWS_FIELD_EXCLUDENAMES_LABEL"
+                        description="MOD_PRETTYREVIEWS_FIELD_EXCLUDENAMES_DESC"
+                        rows="5"
+                        default=""
+                />
                 <field
                         type="CustomPretty"
                         name="CustomPretty"

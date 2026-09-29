@@ -67,9 +67,18 @@ https://developers.google.com/maps/documentation/places/web-service/place-id
 
 The API key used for the Google Places request. Keep this key restricted to the website server IP and the required Places API.
 
+### Google Places API
+
+Chooses which Google API the reviews are fetched from:
+
+- **Places API (Legacy)**, the default and what every earlier version used. Google no longer enables it for new Cloud projects, and it cannot find some businesses, such as service-area businesses without an address (it answers `NOT_FOUND` for their Place ID).
+- **Places API (New)**, which finds those businesses too. Enable "Places API (New)" in the Cloud project and allow it in the key's API restrictions; otherwise Google answers `PERMISSION_DENIED` / `API_KEY_SERVICE_BLOCKED`.
+
+Both store the same review data, so switching keeps the reviews already cached. Places API (New) has no sort option and always returns the most relevant reviews, so the fetch sort below is only shown for the legacy API.
+
 ### Reviews Fetch Sort
 
-Controls how Google sorts the reviews returned by the API:
+Only applies to Places API (Legacy). Controls how Google sorts the reviews returned by the API:
 
 - **Most relevant**
 - **Newest**
@@ -90,6 +99,10 @@ Controls how cached reviews are displayed:
 ### Hide Empty Reviews
 
 When enabled, reviews without text are hidden on the frontend.
+
+### Hide Reviewers
+
+Reviews by the reviewers listed here are hidden on the frontend. Enter one name per line, exactly as Google shows it; upper and lower case and extra spaces do not matter, but the whole name has to match, so `Anna` does not hide `Anna Müller`. The reviews stay in the cache, so removing a name shows them again.
 
 ### Leave a Review Button
 
@@ -185,7 +198,7 @@ Check:
 - the module is assigned to the correct menu items;
 - the selected template position exists;
 - the JSON cache file contains reviews;
-- your display limit and "hide empty reviews" settings do not filter every review.
+- your display limit, "hide empty reviews" and "hide reviewers" settings do not filter every review.
 
 ## Security Notes
 

@@ -116,10 +116,11 @@ class PrettyreviewsHelper
     }
 
     /**
-     * Apply display options (minRating / hideEmpty / sort / limit) to a raw review payload.
+     * Apply display options (minRating / hideEmpty / excludeNames / sort / limit) to a raw review payload.
      *
      * @param   array  $raw   Raw payload as returned by loadRaw().
-     * @param   array  $opts  Keys: minRating (int), hideEmpty (int), sort (string), limit (int|null).
+     * @param   array  $opts  Keys: minRating (int), hideEmpty (int), excludeNames (string, one
+     *                        name per line), sort (string), limit (int|null).
      *
      * @return  array
      *
@@ -152,6 +153,15 @@ class PrettyreviewsHelper
             });
         }
 
+        $excludedNames = $this->parseNameList((string) ($opts['excludeNames'] ?? ''));
+
+        if ($excludedNames !== []) {
+            $reviews = array_filter($reviews, function ($r) use ($excludedNames) {
+                $name = is_array($r) && isset($r['author_name']) ? $this->normalizeName((string) $r['author_name']) : '';
+                return !isset($excludedNames[$name]);
+            });
+        }
+
         if ($sort === 'random') {
             $keys = array_keys($reviews);
             shuffle($keys);
@@ -177,9 +187,48 @@ class PrettyreviewsHelper
     }
 
     /**
+     * Turn a list of names, one per line, into a lookup of normalized names.
+     *
+     * @param   string  $list  Names as entered in the module settings.
+     *
+     * @return  array  Normalized name => true.
+     *
+     * @since   2.3.0
+     */
+    private function parseNameList(string $list): array
+    {
+        $names = [];
+
+        foreach (preg_split('/\R/u', $list) ?: [] as $line) {
+            $name = $this->normalizeName($line);
+
+            if ($name !== '') {
+                $names[$name] = true;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Normalize a reviewer name for comparison: trimmed, inner whitespace collapsed,
+     * lower case.
+     *
+     * @param   string  $name  Reviewer name.
+     *
+     * @return  string
+     *
+     * @since   2.3.0
+     */
+    private function normalizeName(string $name): string
+    {
+        return mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $name)));
+    }
+
+    /**
      * Pull reviews from Google for a module, merge with cache, save raw payload.
      *
-     * Credentials (cid, apikey, reviewsort) are read server-side from the module
+     * Credentials (cid, apikey, reviewsort, apiversion) are read server-side from the module
      * record — never accepted from the client.
      *
      * @param   int  $moduleId  Module record id.
@@ -201,12 +250,15 @@ class PrettyreviewsHelper
         $apiKey         = (string) ($params['apikey'] ?? '');
         $reviewSort     = (string) ($params['reviewsort'] ?? 'most_relevant');
         $reviewLanguage = (string) ($params['reviewlanguage'] ?? '');
+        $apiVersion     = (string) ($params['apiversion'] ?? 'legacy');
 
         if ($cid === '' || $apiKey === '') {
             throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_MISSING_CREDENTIALS'), 400);
         }
 
-        $googleReviews = $this->fetchFromGoogle($cid, $apiKey, $reviewSort, $reviewLanguage);
+        $googleReviews = $apiVersion === 'new'
+            ? $this->fetchFromPlacesNew($cid, $apiKey, $reviewLanguage)
+            : $this->fetchFromGoogle($cid, $apiKey, $reviewSort, $reviewLanguage);
 
         $cachePath = $this->cachePath($moduleId);
         $raw       = $this->readJson($cachePath);
@@ -391,6 +443,155 @@ class PrettyreviewsHelper
         }
 
         return $decoded;
+    }
+
+    /**
+     * Call Places API (New) via Joomla's HTTP client.
+     *
+     * The response is converted to the shape of the legacy Place Details response, so
+     * the merge, the photo cache and the layouts work unchanged for both APIs.
+     *
+     * @param   string  $cid       Google place id.
+     * @param   string  $apiKey    Google API key.
+     * @param   string  $language  Google language code; empty falls back to the site language.
+     *
+     * @return  object
+     *
+     * @since   2.3.0
+     */
+    private function fetchFromPlacesNew(string $cid, string $apiKey, string $language = ''): object
+    {
+        $language = $language !== '' ? $language : $this->resolveSiteLanguage();
+        $placeId  = preg_replace('#^places/#', '', trim($cid));
+
+        $url = 'https://places.googleapis.com/v1/places/' . rawurlencode($placeId)
+            . '?languageCode=' . urlencode($language);
+
+        $headers = [
+            'X-Goog-Api-Key'   => $apiKey,
+            'X-Goog-FieldMask' => 'rating,userRatingCount,googleMapsUri,reviews',
+        ];
+
+        try {
+            $http     = HttpFactory::getHttp();
+            $response = $http->get($url, $headers, 60);
+        } catch (\Throwable $e) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_REQUEST_FAILED'), 502, $e);
+        }
+
+        $statusCode = (int) $response->getStatusCode();
+        $decoded    = json_decode((string) $response->getBody());
+
+        if ($statusCode !== 200) {
+            if ($decoded instanceof \stdClass && isset($decoded->error) && is_object($decoded->error)) {
+                $status  = (string) ($decoded->error->status ?? $statusCode);
+                $message = trim((string) ($decoded->error->message ?? ''));
+
+                throw new \RuntimeException(
+                    Text::sprintf(
+                        'MOD_PRETTYREVIEWS_ERROR_GOOGLE_STATUS',
+                        $status,
+                        $message !== '' ? $message : $status
+                    ),
+                    502
+                );
+            }
+
+            throw new \RuntimeException(Text::sprintf('MOD_PRETTYREVIEWS_ERROR_GOOGLE_HTTP_STATUS', $statusCode), 502);
+        }
+
+        if (!$decoded instanceof \stdClass) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_INVALID_RESPONSE'), 502);
+        }
+
+        $result = $this->legacyPlaceResult($decoded);
+
+        if ((array) $result === []) {
+            throw new \RuntimeException(Text::_('MOD_PRETTYREVIEWS_ERROR_GOOGLE_EMPTY_RESULT'), 502);
+        }
+
+        return (object) ['status' => 'OK', 'result' => $result];
+    }
+
+    /**
+     * Convert a Places API (New) place into a legacy Place Details result.
+     *
+     * @param   object  $place  Decoded Places API (New) place.
+     *
+     * @return  object
+     *
+     * @since   2.3.0
+     */
+    private function legacyPlaceResult(object $place): object
+    {
+        $result = new \stdClass();
+
+        if (isset($place->rating)) {
+            $result->rating = $place->rating;
+        }
+
+        if (isset($place->userRatingCount)) {
+            $result->user_ratings_total = $place->userRatingCount;
+        }
+
+        if (isset($place->googleMapsUri)) {
+            $result->url = $place->googleMapsUri;
+        }
+
+        if (isset($place->reviews) && is_array($place->reviews)) {
+            $result->reviews = [];
+
+            foreach ($place->reviews as $review) {
+                $legacyReview = is_object($review) ? $this->legacyReview($review) : null;
+
+                if ($legacyReview !== null) {
+                    $result->reviews[] = $legacyReview;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Convert a Places API (New) review into a legacy review.
+     *
+     * The cache is keyed by the review's unix timestamp, so a review without a
+     * readable publish time is skipped.
+     *
+     * @param   object  $review  Decoded Places API (New) review.
+     *
+     * @return  object|null
+     *
+     * @since   2.3.0
+     */
+    private function legacyReview(object $review): ?object
+    {
+        $publishTime = preg_replace('/\.\d+/', '', (string) ($review->publishTime ?? ''));
+        $time        = $publishTime !== '' ? strtotime($publishTime) : false;
+
+        if ($time === false) {
+            return null;
+        }
+
+        $author       = isset($review->authorAttribution) && is_object($review->authorAttribution) ? $review->authorAttribution : new \stdClass();
+        $text         = isset($review->text) && is_object($review->text) ? $review->text : new \stdClass();
+        $originalText = isset($review->originalText) && is_object($review->originalText) ? $review->originalText : $text;
+        $language     = (string) ($text->languageCode ?? '');
+        $original     = (string) ($originalText->languageCode ?? $language);
+
+        return (object) [
+            'author_name'               => (string) ($author->displayName ?? ''),
+            'author_url'                => (string) ($author->uri ?? ''),
+            'language'                  => $language,
+            'original_language'         => $original,
+            'profile_photo_url'         => (string) ($author->photoUri ?? ''),
+            'rating'                    => (int) ($review->rating ?? 0),
+            'relative_time_description' => (string) ($review->relativePublishTimeDescription ?? ''),
+            'text'                      => (string) ($text->text ?? $originalText->text ?? ''),
+            'time'                      => $time,
+            'translated'                => $language !== $original,
+        ];
     }
 
     /**
